@@ -1,17 +1,41 @@
 /**
  * UI du combat
  *
- * Gère l'affichage de l'état du combat : main, ennemi, stats, log, popups.
+ * Nouveau layout "scène" :
+ *   - Fond de terrain (placeholder rectangle, remplaçable par image)
+ *   - Héros à gauche (sprite placeholder + infos)
+ *   - Ennemi(s) à droite (sprite placeholder + intention + infos)
+ *   - Les sprites changent visuellement selon HP / statuts
+ *   - Main de cartes en bas
  */
 
 class BattleUI {
     constructor() {
+        // Battlefield
+        this.heroSpriteEl = document.getElementById("hero-sprite");
+        this.heroEmojiEl = document.getElementById("hero-emoji");
+        this.heroNameEl = document.getElementById("hero-name-label");
+        this.heroHpFillEl = document.getElementById("hero-hp-fill");
+        this.heroHpTextEl = document.getElementById("hero-hp-text");
+        this.heroBlockEl = document.getElementById("hero-block");
+        this.heroStatusesEl = document.getElementById("hero-statuses");
+
+        this.enemySpriteEl = document.getElementById("enemy-sprite");
+        this.enemyEmojiEl = document.getElementById("enemy-emoji");
+        this.enemyNameEl = document.getElementById("enemy-name-label");
+        this.enemyHpFillEl = document.getElementById("enemy-hp-fill");
+        this.enemyHpTextEl = document.getElementById("enemy-hp-text");
+        this.enemyBlockEl = document.getElementById("enemy-block");
+        this.enemyStatusesEl = document.getElementById("enemy-statuses");
+        this.enemyIntentEl = document.getElementById("enemy-intent");
+
+        // Player zone
         this.handEl = document.getElementById("hand");
-        this.enemyDisplayEl = document.getElementById("enemy-display");
-        this.playerStatsEl = document.getElementById("player-stats");
         this.energyDisplayEl = document.getElementById("energy-display");
+        this.pileInfoEl = document.getElementById("pile-info");
         this.logEl = document.getElementById("battle-log");
         this.btnEndTurn = document.getElementById("btn-end-turn");
+
         this.battleState = null;
     }
 
@@ -29,15 +53,111 @@ class BattleUI {
     render() {
         if (!this.battleState) return;
 
-        this.renderHand();
+        this.renderHero();
         this.renderEnemy();
-        this.renderPlayerStats();
+        this.renderHand();
         this.renderEnergy();
         this.renderPileInfo();
 
-        // Disable end turn if not player's turn
         this.btnEndTurn.disabled = !this.battleState.isPlayerTurn || this.battleState.isGameOver;
     }
+
+    // === Héros (gauche) ===
+
+    renderHero() {
+        const player = this.battleState.player;
+        const hpPercent = (player.hp / player.maxHp) * 100;
+        const hpClass = hpPercent > 60 ? "hp-high" : hpPercent > 30 ? "hp-mid" : "hp-low";
+
+        // Emoji héros
+        const hero = getHeroById(player.heroId);
+        this.heroEmojiEl.textContent = hero ? hero.art : "⚔️";
+
+        // Nom
+        this.heroNameEl.textContent = player.name;
+
+        // HP bar
+        this.heroHpFillEl.style.width = `${hpPercent}%`;
+        this.heroHpFillEl.className = `bf-hp-fill ${hpClass}`;
+        this.heroHpTextEl.textContent = `${player.hp} / ${player.maxHp}`;
+
+        // Block
+        this.heroBlockEl.textContent = player.block > 0 ? `🛡️ ${player.block}` : "";
+
+        // Classes visuelles sur le sprite
+        this.heroSpriteEl.className = "bf-char-sprite";
+        this.heroSpriteEl.classList.add(hpClass);
+        if (player.block > 0) this.heroSpriteEl.classList.add("has-block");
+        if (EffectProcessor.getStatusValue(player, "poison") > 0) this.heroSpriteEl.classList.add("is-poisoned");
+        if (EffectProcessor.getStatusValue(player, "weakness") > 0) this.heroSpriteEl.classList.add("is-weak");
+
+        // Statuts
+        this.heroStatusesEl.innerHTML = this.renderStatuses(player);
+    }
+
+    // === Ennemi (droite) ===
+
+    renderEnemy() {
+        const enemy = this.battleState.enemy;
+        const hpPercent = (enemy.hp / enemy.maxHp) * 100;
+        const hpClass = hpPercent > 60 ? "hp-high" : hpPercent > 30 ? "hp-mid" : "hp-low";
+
+        // Emoji
+        this.enemyEmojiEl.textContent = enemy.art;
+
+        // Nom
+        this.enemyNameEl.textContent = enemy.name;
+
+        // HP bar
+        this.enemyHpFillEl.style.width = `${hpPercent}%`;
+        this.enemyHpFillEl.className = `bf-hp-fill ${hpClass}`;
+        this.enemyHpTextEl.textContent = `${enemy.hp} / ${enemy.maxHp}`;
+
+        // Block
+        this.enemyBlockEl.textContent = enemy.block > 0 ? `🛡️ ${enemy.block}` : "";
+
+        // Classes visuelles sur le sprite
+        this.enemySpriteEl.className = "bf-char-sprite";
+        this.enemySpriteEl.id = "enemy-sprite";
+        this.enemySpriteEl.classList.add(hpClass);
+        if (enemy.block > 0) this.enemySpriteEl.classList.add("has-block");
+        if (EffectProcessor.getStatusValue(enemy, "poison") > 0) this.enemySpriteEl.classList.add("is-poisoned");
+        if (EffectProcessor.getStatusValue(enemy, "weakness") > 0) this.enemySpriteEl.classList.add("is-weak");
+
+        // Statuts
+        this.enemyStatusesEl.innerHTML = this.renderStatuses(enemy);
+
+        // Intention
+        this.renderIntent();
+    }
+
+    renderIntent() {
+        const enemy = this.battleState.enemy;
+
+        if (!enemy.currentIntent || !this.battleState.isPlayerTurn) {
+            this.enemyIntentEl.className = "bf-enemy-intent intent-hidden";
+            this.enemyIntentEl.textContent = "";
+            return;
+        }
+
+        const intentType = EnemyAI.getIntentType(enemy.currentIntent);
+        const intentText = EnemyAI.getIntentDisplay(enemy, this.battleState.player, enemy.currentIntent);
+        this.enemyIntentEl.className = `bf-enemy-intent intent-${intentType}`;
+        this.enemyIntentEl.textContent = intentText;
+    }
+
+    renderStatuses(entity) {
+        let html = "";
+        if (!entity.statuses) return html;
+        for (const [status, value] of Object.entries(entity.statuses)) {
+            if (value > 0 && StatusTypes[status]) {
+                html += `<span class="status-badge ${status}">${StatusTypes[status].icon} ${value}</span>`;
+            }
+        }
+        return html;
+    }
+
+    // === Main ===
 
     renderHand() {
         this.handEl.innerHTML = "";
@@ -55,79 +175,6 @@ class BattleUI {
         });
     }
 
-    renderEnemy() {
-        this.enemyDisplayEl.innerHTML = "";
-
-        const enemy = this.battleState.enemy;
-        const hpPercent = (enemy.hp / enemy.maxHp) * 100;
-
-        // Intent
-        let intentHtml = "";
-        if (enemy.currentIntent && this.battleState.isPlayerTurn) {
-            const intentType = EnemyAI.getIntentType(enemy.currentIntent);
-            const intentText = EnemyAI.getIntentDisplay(enemy, this.battleState.player, enemy.currentIntent);
-            intentHtml = `<div class="enemy-intent intent-${intentType}">${intentText}</div>`;
-        }
-
-        // Block
-        const blockHtml = enemy.block > 0
-            ? `<div class="enemy-block-display">${enemy.block}</div>`
-            : "";
-
-        // Statuses
-        let statusHtml = "";
-        if (enemy.statuses) {
-            for (const [status, value] of Object.entries(enemy.statuses)) {
-                if (value > 0 && StatusTypes[status]) {
-                    statusHtml += `<span class="status-badge ${status}">${StatusTypes[status].icon} ${value}</span>`;
-                }
-            }
-        }
-
-        const enemyEl = document.createElement("div");
-        enemyEl.className = "enemy-card";
-        enemyEl.innerHTML = `
-            ${intentHtml}
-            <div class="enemy-sprite" id="enemy-sprite">
-                ${blockHtml}
-                ${enemy.art}
-            </div>
-            <div class="enemy-hp-bar">
-                <div class="enemy-hp-fill" style="width: ${hpPercent}%"></div>
-            </div>
-            <div class="enemy-hp-text">${enemy.hp} / ${enemy.maxHp}</div>
-            <div class="enemy-name-label">${enemy.name}</div>
-            <div class="enemy-statuses">${statusHtml}</div>
-        `;
-
-        this.enemyDisplayEl.appendChild(enemyEl);
-    }
-
-    renderPlayerStats() {
-        const player = this.battleState.player;
-
-        let statusHtml = "";
-        if (player.statuses) {
-            for (const [status, value] of Object.entries(player.statuses)) {
-                if (value > 0 && StatusTypes[status]) {
-                    statusHtml += `<span class="status-badge ${status}">${StatusTypes[status].icon} ${value}</span>`;
-                }
-            }
-        }
-
-        this.playerStatsEl.innerHTML = `
-            <div class="stat health">
-                <span class="stat-icon">❤️</span>
-                <span class="stat-value">${player.hp} / ${player.maxHp}</span>
-            </div>
-            <div class="stat block">
-                <span class="stat-icon">🛡️</span>
-                <span class="stat-value">${player.block}</span>
-            </div>
-            <div class="status-effects">${statusHtml}</div>
-        `;
-    }
-
     renderEnergy() {
         this.energyDisplayEl.innerHTML = `
             <div class="energy-orb">${this.battleState.energy}</div>
@@ -136,20 +183,11 @@ class BattleUI {
     }
 
     renderPileInfo() {
-        // Supprimer l'ancien
-        const existing = document.querySelector(".pile-info");
-        if (existing) existing.remove();
-
-        const pileEl = document.createElement("div");
-        pileEl.className = "pile-info";
-        pileEl.innerHTML = `
-            <span class="pile-count" title="Pioche">🃏 Pioche: ${this.battleState.drawPile.length}</span>
-            <span class="pile-count" title="Défausse">♻️ Défausse: ${this.battleState.discardPile.length}</span>
-            <span class="pile-count" title="Exile">🔥 Exile: ${this.battleState.exhaustPile.length}</span>
+        this.pileInfoEl.innerHTML = `
+            <span class="pile-count" title="Pioche">🃏 ${this.battleState.drawPile.length}</span>
+            <span class="pile-count" title="Défausse">♻️ ${this.battleState.discardPile.length}</span>
+            <span class="pile-count" title="Exile">🔥 ${this.battleState.exhaustPile.length}</span>
         `;
-
-        const playerZone = document.querySelector(".player-zone");
-        playerZone.insertBefore(pileEl, playerZone.querySelector(".hand"));
     }
 
     // === Interactions ===
@@ -160,7 +198,11 @@ class BattleUI {
         const card = this.battleState.hand[handIndex];
         if (!card || !this.battleState.canPlayCard(card)) return;
 
-        // Animation de jeu
+        // Animation lunge du héros
+        this.heroSpriteEl.classList.add("attacking");
+        setTimeout(() => this.heroSpriteEl.classList.remove("attacking"), 400);
+
+        // Animation de jeu de carte
         const cardEls = this.handEl.querySelectorAll(".card");
         const cardEl = cardEls[handIndex];
         if (cardEl) {
@@ -173,14 +215,20 @@ class BattleUI {
     }
 
     onCardPlayed(card, index) {
-        // Re-rendu sera fait par onStateChange
+        // Re-rendu via onStateChange
     }
 
     onEnemyAction(type) {
-        const sprite = document.getElementById("enemy-sprite");
-        if (sprite && type === "attack") {
-            sprite.classList.add("damaged");
-            setTimeout(() => sprite.classList.remove("damaged"), 300);
+        if (type === "attack") {
+            // Animation lunge ennemi
+            this.enemySpriteEl.classList.add("attacking");
+            setTimeout(() => this.enemySpriteEl.classList.remove("attacking"), 400);
+
+            // Shake héros
+            setTimeout(() => {
+                this.heroSpriteEl.classList.add("damaged");
+                setTimeout(() => this.heroSpriteEl.classList.remove("damaged"), 300);
+            }, 200);
         }
     }
 
@@ -207,7 +255,7 @@ class BattleUI {
     showLog(message) {
         this.logEl.textContent = message;
         this.logEl.style.animation = "none";
-        this.logEl.offsetHeight; // force reflow
+        this.logEl.offsetHeight;
         this.logEl.style.animation = "fadeIn 0.3s ease";
     }
 
@@ -220,26 +268,15 @@ class BattleUI {
         popup.className = `damage-popup ${type}`;
         popup.textContent = type === "heal" ? `+${value}` : `-${value}`;
 
-        // Position
-        if (target === "enemy") {
-            const enemySprite = document.getElementById("enemy-sprite");
-            if (enemySprite) {
-                const rect = enemySprite.getBoundingClientRect();
-                popup.style.left = `${rect.left + rect.width / 2 - 20}px`;
-                popup.style.top = `${rect.top}px`;
+        const spriteEl = target === "enemy" ? this.enemySpriteEl : this.heroSpriteEl;
+        if (spriteEl) {
+            const rect = spriteEl.getBoundingClientRect();
+            popup.style.left = `${rect.left + rect.width / 2 - 20}px`;
+            popup.style.top = `${rect.top + 20}px`;
 
-                // Shake l'ennemi quand il prend des dégâts
-                if (type === "damage" || type === "poison") {
-                    enemySprite.classList.add("damaged");
-                    setTimeout(() => enemySprite.classList.remove("damaged"), 300);
-                }
-            }
-        } else {
-            const statsEl = this.playerStatsEl;
-            if (statsEl) {
-                const rect = statsEl.getBoundingClientRect();
-                popup.style.left = `${rect.left + 50}px`;
-                popup.style.top = `${rect.top}px`;
+            if ((type === "damage" || type === "poison") && target === "enemy") {
+                this.enemySpriteEl.classList.add("damaged");
+                setTimeout(() => this.enemySpriteEl.classList.remove("damaged"), 300);
             }
         }
 

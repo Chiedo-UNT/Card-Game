@@ -48,26 +48,59 @@
         <!-- Écran de combat -->
         <div id="screen-battle" class="screen">
             <div class="battle-container">
-                <!-- Zone ennemie -->
-                <div class="enemy-zone">
-                    <div id="enemy-display" class="enemy-display"></div>
-                </div>
-
-                <!-- Zone centrale -->
-                <div class="middle-zone">
-                    <div id="battle-log" class="battle-log"></div>
-                </div>
-
-                <!-- Zone joueur -->
-                <div class="player-zone">
-                    <div class="player-info">
-                        <div id="player-stats" class="player-stats"></div>
-                        <div class="energy-display" id="energy-display"></div>
+                <!-- Scène de combat : fond + personnages -->
+                <div class="battlefield">
+                    <div class="battlefield-bg" id="battlefield-bg">
+                        <!-- Placeholder fond de terrain -->
                     </div>
-                    <div id="hand" class="hand"></div>
-                    <div class="battle-actions">
+
+                    <!-- Héros (gauche) -->
+                    <div class="bf-character bf-hero" id="bf-hero">
+                        <div class="bf-char-sprite" id="hero-sprite">
+                            <div class="bf-char-placeholder"></div>
+                            <div class="bf-char-emoji" id="hero-emoji"></div>
+                        </div>
+                        <div class="bf-char-info">
+                            <div class="bf-char-name" id="hero-name-label"></div>
+                            <div class="bf-hp-bar">
+                                <div class="bf-hp-fill" id="hero-hp-fill"></div>
+                            </div>
+                            <div class="bf-hp-text" id="hero-hp-text"></div>
+                            <div class="bf-block" id="hero-block"></div>
+                            <div class="bf-statuses" id="hero-statuses"></div>
+                        </div>
+                    </div>
+
+                    <!-- Ennemi(s) (droite) -->
+                    <div class="bf-character bf-enemy" id="bf-enemy">
+                        <div class="bf-enemy-intent" id="enemy-intent"></div>
+                        <div class="bf-char-sprite" id="enemy-sprite">
+                            <div class="bf-char-placeholder"></div>
+                            <div class="bf-char-emoji" id="enemy-emoji"></div>
+                        </div>
+                        <div class="bf-char-info">
+                            <div class="bf-char-name" id="enemy-name-label"></div>
+                            <div class="bf-hp-bar">
+                                <div class="bf-hp-fill" id="enemy-hp-fill"></div>
+                            </div>
+                            <div class="bf-hp-text" id="enemy-hp-text"></div>
+                            <div class="bf-block" id="enemy-block"></div>
+                            <div class="bf-statuses" id="enemy-statuses"></div>
+                        </div>
+                    </div>
+
+                    <!-- Log au centre de la scène -->
+                    <div class="bf-log" id="battle-log"></div>
+                </div>
+
+                <!-- Zone joueur (main + actions) -->
+                <div class="player-zone">
+                    <div class="player-bar">
+                        <div class="energy-display" id="energy-display"></div>
+                        <div class="pile-info" id="pile-info"></div>
                         <button class="btn btn-end-turn" id="btn-end-turn" onclick="game.endTurn()">Fin du Tour</button>
                     </div>
+                    <div id="hand" class="hand"></div>
                 </div>
             </div>
         </div>
