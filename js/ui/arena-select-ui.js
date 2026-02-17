@@ -94,9 +94,14 @@ class ArenaSelectUI {
         const hero = getHeroById(heroId);
         if (!hero) return;
 
+        // Utiliser le deck custom s'il existe, sinon le deck par défaut
+        const deckIds = (game.customDecks && game.customDecks[heroId] && game.customDecks[heroId].length > 0)
+            ? game.customDecks[heroId]
+            : hero.startingDeck;
+
         // Compter les cartes
         const cardCounts = {};
-        for (const cardId of hero.startingDeck) {
+        for (const cardId of deckIds) {
             cardCounts[cardId] = (cardCounts[cardId] || 0) + 1;
         }
 

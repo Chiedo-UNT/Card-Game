@@ -69,14 +69,32 @@
             </div>
         </div>
 
-        <!-- Collection -->
+        <!-- Collection / Deck Builder -->
         <div id="screen-collection" class="screen">
             <div class="collection-container">
-                <h2>Collection de Cartes</h2>
-                <div class="collection-filters">
-                    <button class="btn btn-filter active" data-hero="all">Toutes</button>
+                <h2>Deck Builder</h2>
+                <div class="deckbuilder-top">
+                    <div class="collection-filters">
+                        <button class="btn btn-filter active" data-hero="all">Toutes</button>
+                    </div>
+                    <div class="deck-hero-picker">
+                        <label>Héros :</label>
+                        <select id="deck-hero-select" class="deck-hero-select"></select>
+                    </div>
                 </div>
-                <div id="collection-grid" class="collection-grid"></div>
+                <div class="deckbuilder-layout">
+                    <div class="deckbuilder-cards">
+                        <h3>Collection</h3>
+                        <div id="collection-grid" class="collection-grid"></div>
+                    </div>
+                    <div class="deckbuilder-deck">
+                        <div class="deck-header">
+                            <h3>Deck <span id="deck-count">(0)</span></h3>
+                            <button class="btn btn-filter btn-reset-deck" id="btn-reset-deck">Reset</button>
+                        </div>
+                        <div id="deck-builder-list" class="deck-builder-list"></div>
+                    </div>
+                </div>
                 <button class="btn btn-back" onclick="game.showScreen('menu')">Retour</button>
             </div>
         </div>

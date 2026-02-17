@@ -11,6 +11,7 @@ class Game {
         this.battleUI = new BattleUI();
         this.collectionUI = new CollectionUI();
         this.battleState = null;
+        this.customDecks = {}; // deck custom par héros (rempli par le deck builder)
     }
 
     init() {
@@ -50,8 +51,14 @@ class Game {
 
         if (!heroData || !enemyData) return;
 
+        // Utiliser le deck custom s'il existe
+        const battleHeroData = { ...heroData };
+        if (this.customDecks[heroData.id] && this.customDecks[heroData.id].length > 0) {
+            battleHeroData.startingDeck = [...this.customDecks[heroData.id]];
+        }
+
         // Créer le combat
-        this.battleState = new BattleState(heroData, enemyData);
+        this.battleState = new BattleState(battleHeroData, enemyData);
         this.battleUI.bind(this.battleState);
 
         // Passer à l'écran de combat
