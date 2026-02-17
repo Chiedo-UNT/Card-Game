@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Arena</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Menu principal -->
+        <div id="screen-menu" class="screen active">
+            <div class="menu-container">
+                <h1 class="game-title">Card Arena</h1>
+                <button class="btn btn-primary" onclick="game.showScreen('arena-select')">Arène</button>
+                <button class="btn btn-secondary" onclick="game.showScreen('collection')">Collection</button>
+            </div>
+        </div>
+
+        <!-- Sélection arène -->
+        <div id="screen-arena-select" class="screen">
+            <div class="arena-select-container">
+                <h2>Préparer le combat</h2>
+                <div class="select-sections">
+                    <div class="select-section">
+                        <h3>Choisis ton Héros</h3>
+                        <div id="hero-select" class="hero-grid"></div>
+                    </div>
+                    <div class="select-section">
+                        <h3>Ton Deck</h3>
+                        <div id="deck-preview" class="deck-preview"></div>
+                    </div>
+                    <div class="select-section">
+                        <h3>Choisis ton Ennemi</h3>
+                        <div id="enemy-select" class="enemy-grid"></div>
+                    </div>
+                </div>
+                <div class="arena-actions">
+                    <button class="btn btn-back" onclick="game.showScreen('menu')">Retour</button>
+                    <button class="btn btn-primary btn-fight" id="btn-fight" onclick="game.startBattle()">Combat !</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Écran de combat -->
+        <div id="screen-battle" class="screen">
+            <div class="battle-container">
+                <!-- Zone ennemie -->
+                <div class="enemy-zone">
+                    <div id="enemy-display" class="enemy-display"></div>
+                </div>
+
+                <!-- Zone centrale -->
+                <div class="middle-zone">
+                    <div id="battle-log" class="battle-log"></div>
+                </div>
+
+                <!-- Zone joueur -->
+                <div class="player-zone">
+                    <div class="player-info">
+                        <div id="player-stats" class="player-stats"></div>
+                        <div class="energy-display" id="energy-display"></div>
+                    </div>
+                    <div id="hand" class="hand"></div>
+                    <div class="battle-actions">
+                        <button class="btn btn-end-turn" id="btn-end-turn" onclick="game.endTurn()">Fin du Tour</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collection -->
+        <div id="screen-collection" class="screen">
+            <div class="collection-container">
+                <h2>Collection de Cartes</h2>
+                <div class="collection-filters">
+                    <button class="btn btn-filter active" data-hero="all">Toutes</button>
+                </div>
+                <div id="collection-grid" class="collection-grid"></div>
+                <button class="btn btn-back" onclick="game.showScreen('menu')">Retour</button>
+            </div>
+        </div>
+
+        <!-- Écran de victoire/défaite -->
+        <div id="screen-result" class="screen">
+            <div class="result-container">
+                <h2 id="result-title"></h2>
+                <div id="result-stats"></div>
+                <button class="btn btn-primary" onclick="game.showScreen('menu')">Menu Principal</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data/cards.js"></script>
+    <script src="js/data/heroes.js"></script>
+    <script src="js/data/enemies.js"></script>
+    <script src="js/data/relics.js"></script>
+    <script src="js/engine/effects.js"></script>
+    <script src="js/engine/battle.js"></script>
+    <script src="js/engine/enemy-ai.js"></script>
+    <script src="js/ui/card-renderer.js"></script>
+    <script src="js/ui/battle-ui.js"></script>
+    <script src="js/ui/arena-select-ui.js"></script>
+    <script src="js/ui/collection-ui.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
