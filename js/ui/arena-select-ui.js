@@ -1,24 +1,37 @@
 /**
  * UI de sélection d'arène
  *
- * Permet de choisir un héros, voir son deck, et choisir un ennemi.
+ * Permet de choisir un héros, un deck (parmi ceux disponibles pour ce héros),
+ * et un ennemi.
  */
 
 class ArenaSelectUI {
     constructor() {
         this.heroSelectEl = document.getElementById("hero-select");
         this.deckPreviewEl = document.getElementById("deck-preview");
+        this.arenaDeckSelectEl = document.getElementById("arena-deck-select");
         this.enemySelectEl = document.getElementById("enemy-select");
         this.btnFight = document.getElementById("btn-fight");
 
         this.selectedHero = null;
+        this.selectedDeckId = null;
         this.selectedEnemy = null;
+        this._eventsbound = false;
     }
 
     init() {
         this.renderHeroes();
         this.renderEnemies();
         this.updateFightButton();
+
+        if (!this._eventsbound) {
+            this._eventsbound = true;
+            this.arenaDeckSelectEl.addEventListener("change", (e) => {
+                this.selectedDeckId = e.target.value;
+                this.renderDeckPreview();
+                this.updateFightButton();
+            });
+        }
     }
 
     renderHeroes() {
@@ -72,9 +85,31 @@ class ArenaSelectUI {
             el.classList.toggle("selected", el.dataset.heroId === heroId);
         });
 
-        // Montrer le deck
-        this.renderDeckPreview(heroId);
+        // Remplir le sélecteur de deck pour ce héros
+        this.renderArenaDeckSelect(heroId);
         this.updateFightButton();
+    }
+
+    renderArenaDeckSelect(heroId) {
+        this.arenaDeckSelectEl.innerHTML = "";
+
+        const heroDecks = game.getDecksForHero(heroId);
+        for (const deck of heroDecks) {
+            const opt = document.createElement("option");
+            opt.value = deck.id;
+            opt.textContent = deck.name;
+            this.arenaDeckSelectEl.appendChild(opt);
+        }
+
+        // Auto-select le premier
+        if (heroDecks.length > 0) {
+            this.selectedDeckId = heroDecks[0].id;
+            this.arenaDeckSelectEl.value = this.selectedDeckId;
+        } else {
+            this.selectedDeckId = null;
+        }
+
+        this.renderDeckPreview();
     }
 
     selectEnemy(enemyId) {
@@ -88,20 +123,17 @@ class ArenaSelectUI {
         this.updateFightButton();
     }
 
-    renderDeckPreview(heroId) {
+    renderDeckPreview() {
         this.deckPreviewEl.innerHTML = "";
 
-        const hero = getHeroById(heroId);
-        if (!hero) return;
+        if (!this.selectedDeckId) return;
 
-        // Utiliser le deck custom s'il existe, sinon le deck par défaut
-        const deckIds = (game.customDecks && game.customDecks[heroId] && game.customDecks[heroId].length > 0)
-            ? game.customDecks[heroId]
-            : hero.startingDeck;
+        const deck = game.getDeckById(this.selectedDeckId);
+        if (!deck) return;
 
         // Compter les cartes
         const cardCounts = {};
-        for (const cardId of deckIds) {
+        for (const cardId of deck.cards) {
             cardCounts[cardId] = (cardCounts[cardId] || 0) + 1;
         }
 
@@ -118,14 +150,15 @@ class ArenaSelectUI {
     }
 
     updateFightButton() {
-        this.btnFight.disabled = !this.selectedHero || !this.selectedEnemy;
+        this.btnFight.disabled = !this.selectedHero || !this.selectedEnemy || !this.selectedDeckId;
         this.btnFight.style.opacity = this.btnFight.disabled ? "0.5" : "1";
     }
 
     getSelection() {
         return {
             heroId: this.selectedHero,
-            enemyId: this.selectedEnemy
+            enemyId: this.selectedEnemy,
+            deckId: this.selectedDeckId
         };
     }
 }

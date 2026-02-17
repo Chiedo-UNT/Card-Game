@@ -28,6 +28,9 @@
                     </div>
                     <div class="select-section">
                         <h3>Ton Deck</h3>
+                        <div class="arena-deck-picker">
+                            <select id="arena-deck-select" class="deck-select"></select>
+                        </div>
                         <div id="deck-preview" class="deck-preview"></div>
                     </div>
                     <div class="select-section">
@@ -77,9 +80,11 @@
                     <div class="collection-filters">
                         <button class="btn btn-filter active" data-hero="all">Toutes</button>
                     </div>
-                    <div class="deck-hero-picker">
-                        <label>Héros :</label>
-                        <select id="deck-hero-select" class="deck-hero-select"></select>
+                    <div class="deck-picker">
+                        <label>Deck :</label>
+                        <select id="deck-select" class="deck-select"></select>
+                        <button class="btn-icon btn-new-deck" id="btn-new-deck" title="Nouveau deck">+</button>
+                        <button class="btn-icon btn-delete-deck" id="btn-delete-deck" title="Supprimer ce deck">&times;</button>
                     </div>
                 </div>
                 <div class="deckbuilder-layout">
@@ -96,6 +101,25 @@
                     </div>
                 </div>
                 <button class="btn btn-back" onclick="game.showScreen('menu')">Retour</button>
+            </div>
+        </div>
+
+        <!-- Modale création de deck -->
+        <div id="modal-new-deck" class="modal-overlay" style="display:none">
+            <div class="modal-box">
+                <h3>Nouveau Deck</h3>
+                <div class="modal-field">
+                    <label>Nom du deck</label>
+                    <input type="text" id="new-deck-name" class="modal-input" placeholder="Mon super deck" maxlength="30">
+                </div>
+                <div class="modal-field">
+                    <label>Héros</label>
+                    <select id="new-deck-hero" class="modal-input"></select>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-back" id="btn-cancel-deck">Annuler</button>
+                    <button class="btn btn-primary" id="btn-confirm-deck">Créer</button>
+                </div>
             </div>
         </div>
 
