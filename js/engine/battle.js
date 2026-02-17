@@ -48,6 +48,9 @@ class BattleState {
         this.isGameOver = false;
         this.result = null; // "victory" | "defeat"
 
+        // Instance ID counter for hand diffing
+        this._nextInstanceId = 0;
+
         // Callbacks UI
         this.onStateChange = null;
         this.onLog = null;
@@ -175,6 +178,7 @@ class BattleState {
             }
             const card = this.drawPile.pop();
             if (card) {
+                card._instanceId = this._nextInstanceId++;
                 this.hand.push(card);
                 drawn++;
             }

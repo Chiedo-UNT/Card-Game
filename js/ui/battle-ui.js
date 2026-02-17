@@ -160,18 +160,69 @@ class BattleUI {
     // === Main ===
 
     renderHand() {
-        this.handEl.innerHTML = "";
+        const handCards = this.battleState.hand;
 
-        this.battleState.hand.forEach((card, index) => {
-            const playable = this.battleState.canPlayCard(card);
-            const cardEl = CardRenderer.createCardElement(card, {
-                playable,
-                index,
-                battleState: this.battleState,
-                onClick: (idx) => this.onCardClick(idx)
-            });
-            CardRenderer.animateDraw(cardEl, index * 80);
-            this.handEl.appendChild(cardEl);
+        // Build map of existing DOM elements by instanceId
+        const existingEls = {};
+        for (const el of Array.from(this.handEl.children)) {
+            const iid = el.dataset.instanceId;
+            if (iid !== undefined) {
+                existingEls[iid] = el;
+            }
+        }
+
+        // Build set of instanceIds currently in hand
+        const currentIds = new Set(handCards.map(c => String(c._instanceId)));
+
+        // Remove cards no longer in hand
+        for (const [iid, el] of Object.entries(existingEls)) {
+            if (!currentIds.has(iid)) {
+                // If already playing an animation (card was played), just let it finish then remove
+                if (el.classList.contains("playing")) {
+                    setTimeout(() => { if (el.parentNode) el.remove(); }, 400);
+                } else {
+                    // Discarded/other removal - subtle exit
+                    el.classList.add("leaving");
+                    el.addEventListener("animationend", () => el.remove(), { once: true });
+                    setTimeout(() => { if (el.parentNode) el.remove(); }, 400);
+                }
+            }
+        }
+
+        // Update or create cards in correct order
+        handCards.forEach((card, index) => {
+            const iid = String(card._instanceId);
+            let cardEl = existingEls[iid];
+
+            if (cardEl) {
+                // Card already exists - update playability and index without re-creating
+                const playable = this.battleState.canPlayCard(card);
+                cardEl.classList.toggle("unplayable", !playable);
+                cardEl.dataset.index = index;
+                cardEl.classList.remove("drawing");
+                cardEl.style.animationDelay = "";
+
+                // Update description if values changed (damage calculations)
+                const descEl = cardEl.querySelector(".card-description");
+                if (descEl) {
+                    descEl.textContent = this.battleState.getCardDescription(card);
+                }
+
+                // Ensure it's in the right position in DOM
+                this.handEl.appendChild(cardEl);
+            } else {
+                // New card - create with draw animation
+                const playable = this.battleState.canPlayCard(card);
+                cardEl = CardRenderer.createCardElement(card, {
+                    playable,
+                    index,
+                    battleState: this.battleState,
+                    onClick: () => this.onCardClickByInstanceId(iid)
+                });
+                cardEl.dataset.instanceId = iid;
+                CardRenderer.animateDraw(cardEl, index * 80);
+                this.handEl.appendChild(cardEl);
+            }
         });
     }
 
@@ -192,8 +243,12 @@ class BattleUI {
 
     // === Interactions ===
 
-    onCardClick(handIndex) {
+    onCardClickByInstanceId(instanceId) {
         if (!this.battleState || !this.battleState.isPlayerTurn) return;
+
+        // Find the actual hand index by instanceId
+        const handIndex = this.battleState.hand.findIndex(c => String(c._instanceId) === instanceId);
+        if (handIndex === -1) return;
 
         const card = this.battleState.hand[handIndex];
         if (!card || !this.battleState.canPlayCard(card)) return;
@@ -202,9 +257,8 @@ class BattleUI {
         this.heroSpriteEl.classList.add("attacking");
         setTimeout(() => this.heroSpriteEl.classList.remove("attacking"), 400);
 
-        // Animation de jeu de carte
-        const cardEls = this.handEl.querySelectorAll(".card");
-        const cardEl = cardEls[handIndex];
+        // Find the card element by instanceId
+        const cardEl = this.handEl.querySelector(`[data-instance-id="${instanceId}"]`);
         if (cardEl) {
             CardRenderer.animatePlay(cardEl).then(() => {
                 this.battleState.playCard(handIndex);
