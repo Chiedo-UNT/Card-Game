@@ -50,6 +50,8 @@ class BattleState {
 
         // Instance ID counter for hand diffing
         this._nextInstanceId = 0;
+        // Flag: true when cards are drawn at start of turn (dealing animation)
+        this._isTurnStartDraw = false;
 
         // Callbacks UI
         this.onStateChange = null;
@@ -95,8 +97,10 @@ class BattleState {
         // Effets de début de tour
         const turnLogs = EffectProcessor.processStartOfTurn(this.player, this);
 
-        // Pioche
+        // Pioche (avec flag pour animation de distribution)
+        this._isTurnStartDraw = true;
         this.drawCards(this.drawPerTurn);
+        this._isTurnStartDraw = false;
 
         // Intention ennemi
         this.updateEnemyIntent();
@@ -179,6 +183,7 @@ class BattleState {
             const card = this.drawPile.pop();
             if (card) {
                 card._instanceId = this._nextInstanceId++;
+                card._isTurnStartDraw = this._isTurnStartDraw;
                 this.hand.push(card);
                 drawn++;
             }

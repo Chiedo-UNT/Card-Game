@@ -758,14 +758,35 @@ body {
     100% { transform: translateY(-200px) scale(0.5); opacity: 0; }
 }
 
-/* Card draw animation */
-.card.drawing {
-    animation: cardDraw 0.3s ease;
+/* Card dealing animation - cards fly in from draw pile (bottom-left) */
+.card.dealing {
+    animation: cardDeal 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
 }
 
-@keyframes cardDraw {
-    from { transform: translateX(200px) translateY(50px) scale(0.5); opacity: 0; }
-    to { transform: translateX(0) translateY(0) scale(1); opacity: 1; }
+@keyframes cardDeal {
+    0% {
+        transform: translateX(-45vw) translateY(60px) scale(0.3) rotateY(180deg) rotateZ(-15deg);
+        opacity: 0;
+    }
+    30% {
+        opacity: 1;
+    }
+    60% {
+        transform: translateX(0) translateY(-30px) scale(1.05) rotateY(20deg) rotateZ(2deg);
+    }
+    100% {
+        transform: translateX(0) translateY(0) scale(1) rotateY(0deg) rotateZ(0deg);
+    }
+}
+
+/* Card draw mid-turn (e.g. draw effects) - quicker, subtler */
+.card.drawing {
+    animation: cardDrawMid 0.3s ease backwards;
+}
+
+@keyframes cardDrawMid {
+    from { transform: translateX(-120px) translateY(40px) scale(0.5) rotateY(90deg); opacity: 0; }
+    to { transform: translateX(0) translateY(0) scale(1) rotateY(0deg); opacity: 1; }
 }
 
 /* Card leaving hand animation */

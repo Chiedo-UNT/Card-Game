@@ -199,7 +199,7 @@ class BattleUI {
                 const playable = this.battleState.canPlayCard(card);
                 cardEl.classList.toggle("unplayable", !playable);
                 cardEl.dataset.index = index;
-                cardEl.classList.remove("drawing");
+                cardEl.classList.remove("drawing", "dealing");
                 cardEl.style.animationDelay = "";
 
                 // Update description if values changed (damage calculations)
@@ -211,7 +211,7 @@ class BattleUI {
                 // Ensure it's in the right position in DOM
                 this.handEl.appendChild(cardEl);
             } else {
-                // New card - create with draw animation
+                // New card - create with appropriate animation
                 const playable = this.battleState.canPlayCard(card);
                 cardEl = CardRenderer.createCardElement(card, {
                     playable,
@@ -220,7 +220,14 @@ class BattleUI {
                     onClick: () => this.onCardClickByInstanceId(iid)
                 });
                 cardEl.dataset.instanceId = iid;
-                CardRenderer.animateDraw(cardEl, index * 80);
+
+                // Distribution (début de tour) vs pioche mid-turn
+                if (card._isTurnStartDraw) {
+                    CardRenderer.animateDeal(cardEl, index, handCards.length);
+                } else {
+                    CardRenderer.animateDraw(cardEl, index * 80);
+                }
+
                 this.handEl.appendChild(cardEl);
             }
         });

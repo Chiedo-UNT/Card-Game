@@ -88,7 +88,16 @@ class CardRenderer {
     }
 
     /**
-     * Animation de pioche
+     * Animation de distribution (début de tour) - effet croupier
+     */
+    static animateDeal(cardEl, index, total) {
+        const delay = index * 120;
+        cardEl.style.animationDelay = `${delay}ms`;
+        cardEl.classList.add("dealing");
+    }
+
+    /**
+     * Animation de pioche mid-turn (effets de draw en combat)
      */
     static animateDraw(cardEl, delay = 0) {
         cardEl.style.animationDelay = `${delay}ms`;
