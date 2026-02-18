@@ -11,12 +11,17 @@ class Game {
         this.arenaSelectUI = new ArenaSelectUI();
         this.battleUI = new BattleUI();
         this.collectionUI = new CollectionUI();
+        this.cardCreatorUI = new CardCreatorUI();
         this.battleState = null;
 
         // Système de decks multiples
         this.decks = [];
         this._nextDeckId = 1;
         this.initDefaultDecks();
+
+        // Cartes custom
+        this._nextCustomCardId = 1;
+        this.loadCustomCards();
     }
 
     // === Decks ===
@@ -66,6 +71,124 @@ class Game {
         return this.decks;
     }
 
+    // === Cartes custom ===
+
+    loadCustomCards() {
+        if (!CARDS_DATA.custom) CARDS_DATA.custom = [];
+        try {
+            const saved = localStorage.getItem("cardArena_customCards");
+            if (saved) {
+                const cards = JSON.parse(saved);
+                for (const card of cards) {
+                    CARDS_DATA.custom.push(card);
+                    // Injecter dans le pool du héros pour la collection
+                    if (CARDS_DATA[card.hero]) {
+                        CARDS_DATA[card.hero].push(card);
+                    }
+                    const idNum = parseInt(card.id.replace("custom_", ""));
+                    if (idNum >= this._nextCustomCardId) {
+                        this._nextCustomCardId = idNum + 1;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("Erreur chargement cartes custom:", e);
+        }
+    }
+
+    saveCustomCardsToStorage() {
+        try {
+            localStorage.setItem("cardArena_customCards", JSON.stringify(CARDS_DATA.custom));
+        } catch (e) {
+            console.warn("Erreur sauvegarde cartes custom:", e);
+        }
+    }
+
+    addCustomCard(data) {
+        const card = {
+            id: `custom_${this._nextCustomCardId++}`,
+            name: data.name,
+            type: data.type,
+            cost: data.cost,
+            hero: data.hero,
+            art: data.art,
+            description: data.description,
+            keywords: [...data.keywords],
+            effects: [...data.effects]
+        };
+        CARDS_DATA.custom.push(card);
+        // Ajouter aussi dans le pool du héros pour qu'elle apparaisse dans la collection
+        if (CARDS_DATA[data.hero]) {
+            CARDS_DATA[data.hero].push(card);
+        }
+        this.saveCustomCardsToStorage();
+        return card;
+    }
+
+    updateCustomCard(cardId, data) {
+        const idx = CARDS_DATA.custom.findIndex(c => c.id === cardId);
+        if (idx === -1) return null;
+
+        const oldCard = CARDS_DATA.custom[idx];
+        const oldHero = oldCard.hero;
+
+        // Mettre à jour dans custom
+        const updated = {
+            ...oldCard,
+            name: data.name,
+            type: data.type,
+            cost: data.cost,
+            hero: data.hero,
+            art: data.art,
+            description: data.description,
+            keywords: [...data.keywords],
+            effects: [...data.effects]
+        };
+        CARDS_DATA.custom[idx] = updated;
+
+        // Retirer de l'ancien héros
+        if (CARDS_DATA[oldHero]) {
+            const heroIdx = CARDS_DATA[oldHero].findIndex(c => c.id === cardId);
+            if (heroIdx !== -1) CARDS_DATA[oldHero].splice(heroIdx, 1);
+        }
+
+        // Ajouter dans le nouveau héros
+        if (CARDS_DATA[data.hero]) {
+            CARDS_DATA[data.hero].push(updated);
+        }
+
+        this.saveCustomCardsToStorage();
+        return updated;
+    }
+
+    deleteCustomCard(cardId) {
+        const idx = CARDS_DATA.custom.findIndex(c => c.id === cardId);
+        if (idx === -1) return false;
+
+        const card = CARDS_DATA.custom[idx];
+
+        // Retirer du pool héros
+        if (CARDS_DATA[card.hero]) {
+            const heroIdx = CARDS_DATA[card.hero].findIndex(c => c.id === cardId);
+            if (heroIdx !== -1) CARDS_DATA[card.hero].splice(heroIdx, 1);
+        }
+
+        // Retirer de custom
+        CARDS_DATA.custom.splice(idx, 1);
+
+        // Retirer des decks qui l'utilisent
+        for (const deck of this.decks) {
+            deck.cards = deck.cards.filter(id => id !== cardId);
+        }
+
+        this.saveCustomCardsToStorage();
+        return true;
+    }
+
+    getCustomCards() {
+        return CARDS_DATA.custom || [];
+    }
+
     // === Navigation ===
 
     init() {
@@ -92,6 +215,9 @@ class Game {
                 break;
             case "collection":
                 this.collectionUI.init();
+                break;
+            case "card-creator":
+                this.cardCreatorUI.init();
                 break;
         }
     }

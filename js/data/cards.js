@@ -467,13 +467,19 @@ const CARDS_DATA = {
                 { type: "draw", value: 1 }
             ]
         }
-    ]
+    ],
+
+    // Cartes neutres (disponibles pour tous les héros)
+    neutral: []
 };
 
 // Fonction utilitaire pour obtenir toutes les cartes à plat
+// Ignore le pool "custom" pour ne pas avoir de doublons (les cartes custom
+// sont déjà ajoutées dans le pool de leur héros respectif).
 function getAllCards() {
     const all = [];
     for (const hero in CARDS_DATA) {
+        if (hero === "custom") continue;
         for (const card of CARDS_DATA[hero]) {
             all.push({ ...card });
         }
@@ -482,8 +488,16 @@ function getAllCards() {
 }
 
 // Obtenir les cartes d'un héros spécifique
+// Inclut aussi les cartes "neutral"
 function getCardsForHero(heroId) {
-    return (CARDS_DATA[heroId] || []).map(c => ({ ...c }));
+    const cards = (CARDS_DATA[heroId] || []).map(c => ({ ...c }));
+    // Ajouter les cartes neutres
+    if (heroId !== "neutral" && CARDS_DATA.neutral) {
+        for (const card of CARDS_DATA.neutral) {
+            cards.push({ ...card });
+        }
+    }
+    return cards;
 }
 
 // Obtenir une carte par son ID

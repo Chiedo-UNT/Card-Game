@@ -14,6 +14,7 @@
                 <h1 class="game-title">Card Arena</h1>
                 <button class="btn btn-primary" onclick="game.showScreen('arena-select')">Arène</button>
                 <button class="btn btn-secondary" onclick="game.showScreen('collection')">Collection</button>
+                <button class="btn btn-secondary" onclick="game.showScreen('card-creator')">Créer une Carte</button>
             </div>
         </div>
 
@@ -156,6 +157,93 @@
             </div>
         </div>
 
+        <!-- Créateur de carte -->
+        <div id="screen-card-creator" class="screen">
+            <div class="creator-container">
+                <h2>Créateur de Carte</h2>
+                <div class="creator-layout">
+                    <!-- Formulaire gauche -->
+                    <div class="creator-form">
+                        <div class="creator-row">
+                            <div class="creator-field">
+                                <label>Nom</label>
+                                <input type="text" id="cc-name" class="modal-input" placeholder="Ma carte" maxlength="30">
+                            </div>
+                            <div class="creator-field creator-field-small">
+                                <label>Coût</label>
+                                <select id="cc-cost" class="modal-input">
+                                    <option value="0">0</option>
+                                    <option value="1" selected>1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="creator-row">
+                            <div class="creator-field">
+                                <label>Type</label>
+                                <select id="cc-type" class="modal-input">
+                                    <option value="attack">Attaque</option>
+                                    <option value="skill">Compétence</option>
+                                    <option value="power">Pouvoir</option>
+                                </select>
+                            </div>
+                            <div class="creator-field">
+                                <label>Héros</label>
+                                <select id="cc-hero" class="modal-input">
+                                    <option value="warrior">Guerrier</option>
+                                    <option value="mage">Mage</option>
+                                    <option value="rogue">Voleur</option>
+                                    <option value="neutral">Neutre</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="creator-row">
+                            <div class="creator-field creator-field-small">
+                                <label>Emoji</label>
+                                <input type="text" id="cc-art" class="modal-input" placeholder="⚔️" maxlength="4">
+                            </div>
+                            <div class="creator-field">
+                                <label>Description</label>
+                                <input type="text" id="cc-desc" class="modal-input" placeholder="Inflige {damage} dégâts.">
+                            </div>
+                        </div>
+                        <div class="creator-field">
+                            <label>Mots-clés</label>
+                            <div class="creator-keywords" id="cc-keywords">
+                                <label class="keyword-check"><input type="checkbox" value="exhaust"> Exhaust</label>
+                                <label class="keyword-check"><input type="checkbox" value="ethereal"> Ethereal</label>
+                                <label class="keyword-check"><input type="checkbox" value="retain"> Retain</label>
+                                <label class="keyword-check"><input type="checkbox" value="innate"> Innate</label>
+                            </div>
+                        </div>
+
+                        <!-- Effets -->
+                        <div class="creator-field">
+                            <label>Effets <button class="btn-add-effect" id="cc-add-effect">+ Ajouter</button></label>
+                            <div id="cc-effects-list" class="creator-effects-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Preview droite -->
+                    <div class="creator-preview-area">
+                        <h3>Aperçu</h3>
+                        <div id="cc-preview" class="creator-preview"></div>
+                        <button class="btn btn-primary" id="cc-save">Sauvegarder</button>
+
+                        <!-- Liste des cartes custom -->
+                        <div class="creator-custom-list">
+                            <h3>Cartes créées <span id="cc-custom-count">(0)</span></h3>
+                            <div id="cc-custom-cards" class="custom-cards-list"></div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-back" onclick="game.showScreen('menu')">Retour</button>
+            </div>
+        </div>
+
         <!-- Écran de victoire/défaite -->
         <div id="screen-result" class="screen">
             <div class="result-container">
@@ -177,6 +265,7 @@
     <script src="js/ui/battle-ui.js"></script>
     <script src="js/ui/arena-select-ui.js"></script>
     <script src="js/ui/collection-ui.js"></script>
+    <script src="js/ui/card-creator-ui.js"></script>
     <script src="js/game.js"></script>
 </body>
 </html>

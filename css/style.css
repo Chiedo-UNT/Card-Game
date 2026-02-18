@@ -1219,3 +1219,246 @@ body {
 .pile-count:hover {
     background: rgba(255,255,255,0.1);
 }
+
+/* === CARD CREATOR === */
+.creator-container {
+    width: 95%;
+    max-width: 1100px;
+    height: 92%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.creator-container h2 {
+    text-align: center;
+    color: var(--gold);
+    flex-shrink: 0;
+}
+
+.creator-layout {
+    display: flex;
+    gap: 24px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.creator-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.creator-row {
+    display: flex;
+    gap: 12px;
+}
+
+.creator-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.creator-field > label {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.creator-field-small {
+    flex: 0 0 80px;
+}
+
+.creator-keywords {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.keyword-check {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.keyword-check input {
+    accent-color: var(--gold);
+    cursor: pointer;
+}
+
+/* Effets */
+.btn-add-effect {
+    background: var(--energy-color);
+    color: var(--bg-dark);
+    border: none;
+    border-radius: 4px;
+    padding: 2px 10px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-add-effect:hover {
+    background: var(--gold);
+}
+
+.creator-effects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.effect-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    background: var(--bg-dark);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.effect-row select, .effect-row input {
+    background: var(--bg-medium);
+    color: var(--text);
+    border: 1px solid var(--bg-light);
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-size: 0.8rem;
+}
+
+.effect-row select { min-width: 100px; }
+.effect-row input[type="number"] { width: 55px; }
+.effect-row input[type="text"] { flex: 1; min-width: 80px; }
+
+.effect-row select:focus, .effect-row input:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+.btn-remove-effect {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.btn-remove-effect:hover {
+    color: var(--accent-hover);
+    transform: scale(1.2);
+}
+
+/* Preview */
+.creator-preview-area {
+    flex: 0 0 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.creator-preview-area h3 {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+}
+
+.creator-preview {
+    perspective: 800px;
+}
+
+.creator-preview .card {
+    margin: 0;
+    cursor: default;
+}
+
+.creator-preview .card:hover {
+    margin: 0;
+}
+
+/* Liste cartes custom */
+.creator-custom-list {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow: hidden;
+}
+
+.creator-custom-list h3 {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    padding-top: 10px;
+    border-top: 1px solid #333;
+}
+
+.creator-custom-list h3 span {
+    font-weight: normal;
+}
+
+.custom-cards-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.custom-card-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+}
+
+.custom-card-entry.type-attack { border-left: 3px solid var(--accent); }
+.custom-card-entry.type-skill { border-left: 3px solid var(--energy-color); }
+.custom-card-entry.type-power { border-left: 3px solid var(--gold); }
+
+.custom-card-entry .cc-entry-info {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.custom-card-entry .cc-entry-cost {
+    color: var(--energy-color);
+    font-weight: bold;
+    min-width: 14px;
+    text-align: center;
+}
+
+.btn-edit-card, .btn-delete-card {
+    background: none;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0 3px;
+    line-height: 1;
+    transition: transform 0.15s;
+}
+
+.btn-edit-card { color: var(--energy-color); }
+.btn-edit-card:hover { color: var(--gold); transform: scale(1.2); }
+
+.btn-delete-card { color: var(--accent); }
+.btn-delete-card:hover { color: var(--accent-hover); transform: scale(1.2); }
