@@ -199,8 +199,12 @@ class BattleUI {
                 const playable = this.battleState.canPlayCard(card);
                 cardEl.classList.toggle("unplayable", !playable);
                 cardEl.dataset.index = index;
-                cardEl.classList.remove("drawing", "dealing");
-                cardEl.style.animationDelay = "";
+
+                // Ne retirer les classes d'animation que si l'animation est terminée
+                // (sinon on coupe la distribution en cours)
+                if (!cardEl.classList.contains("dealing") && !cardEl.classList.contains("drawing")) {
+                    cardEl.style.animationDelay = "";
+                }
 
                 // Update description if values changed (damage calculations)
                 const descEl = cardEl.querySelector(".card-description");

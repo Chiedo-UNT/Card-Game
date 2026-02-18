@@ -188,7 +188,12 @@ class BattleState {
                 drawn++;
             }
         }
-        this.emitStateChange();
+        // Ne pas émettre de stateChange ici pendant le draw de début de tour,
+        // car startPlayerTurn() le fait déjà après. Évite un double rendu
+        // qui annulerait l'animation de distribution.
+        if (!this._isTurnStartDraw) {
+            this.emitStateChange();
+        }
         return drawn;
     }
 

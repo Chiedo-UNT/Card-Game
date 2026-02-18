@@ -94,6 +94,11 @@ class CardRenderer {
         const delay = index * 120;
         cardEl.style.animationDelay = `${delay}ms`;
         cardEl.classList.add("dealing");
+        // Nettoyer après l'animation pour ne pas bloquer les transitions futures
+        cardEl.addEventListener("animationend", () => {
+            cardEl.classList.remove("dealing");
+            cardEl.style.animationDelay = "";
+        }, { once: true });
     }
 
     /**
@@ -102,5 +107,9 @@ class CardRenderer {
     static animateDraw(cardEl, delay = 0) {
         cardEl.style.animationDelay = `${delay}ms`;
         cardEl.classList.add("drawing");
+        cardEl.addEventListener("animationend", () => {
+            cardEl.classList.remove("drawing");
+            cardEl.style.animationDelay = "";
+        }, { once: true });
     }
 }
