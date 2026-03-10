@@ -162,6 +162,8 @@ class CombatState {
       // Add assomme immunity
       const resilience = unit.resilience || unit.stats?.resilience || 2;
       this.applyStatus(this.currentUnit, 'assomme_immune', 1, resilience);
+      // Auto-advance if not the player's turn
+      if (this.currentUnit !== 'player') return this.nextTurn();
       return { unitId: this.currentUnit, tick: this.currentTick, skipped: true };
     }
 
@@ -170,10 +172,20 @@ class CombatState {
       this.player.initiative = this.player.baseInitiative;
       Engine.bus.emit('combat:player_turn_start', { tick: this.currentTick });
     } else {
-      // Enemy turn — calculate and execute action
+      // Enemy turn — calculate and execute action, then auto-advance
       this.calculateEnemyAction(this.currentUnit);
       Engine.bus.emit('combat:enemy_turn_start', { unitId: this.currentUnit, tick: this.currentTick });
       this.executeEnemyAction(this.currentUnit);
+
+      // Check if combat ended after enemy action
+      const combatEnd = this.checkCombatEnd();
+      if (combatEnd) {
+        Engine.bus.emit('combat:ended', { result: combatEnd });
+        return { unitId: this.currentUnit, tick: this.currentTick, skipped: false };
+      }
+
+      // Auto-advance to next turn after enemy finishes
+      return this.nextTurn();
     }
 
     return { unitId: this.currentUnit, tick: this.currentTick, skipped: false };
