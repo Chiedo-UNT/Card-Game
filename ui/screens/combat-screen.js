@@ -547,7 +547,19 @@ class CombatScreen {
         const valid = zone.filter(h =>
           HexGrid.inBounds(h.q, h.r, this._state.grid.width, this._state.grid.height)
         );
-        this._hexGrid.highlightZone(valid);
+        // Find entities in the zone to highlight them
+        const zoneKeys = new Set(valid.map(h => `${h.q},${h.r}`));
+        const affected = [];
+        if (zoneKeys.has(`${this._state.player.pos.q},${this._state.player.pos.r}`)) {
+          affected.push('player');
+        }
+        for (const e of this._state.enemies) {
+          if (e.hp <= 0) continue;
+          if (zoneKeys.has(`${e.pos.q},${e.pos.r}`)) {
+            affected.push(e.id);
+          }
+        }
+        this._hexGrid.highlightZone(valid, affected);
         break;
       }
 

@@ -417,8 +417,8 @@ class HexGridRenderer {
     el.dataset.cardTarget = '1';
   }
 
-  /** Highlight a zone (array of {q,r}). */
-  highlightZone(hexes) {
+  /** Highlight a zone (array of {q,r}), and optionally highlight unit tokens in the zone. */
+  highlightZone(hexes, affectedUnitIds = []) {
     this._clearCardTargeting();
     for (const { q, r } of hexes) {
       const key = `${q},${r}`;
@@ -428,6 +428,16 @@ class HexGridRenderer {
       el.style.background = 'rgba(255,100,30,0.35)';
       el.style.outline = '2px solid rgba(255,100,30,0.7)';
       el.dataset.cardTarget = '1';
+    }
+    // Highlight affected entity tokens
+    this._highlightedTokenIds = [];
+    for (const unitId of affectedUnitIds) {
+      const token = this._tokens[unitId];
+      if (!token) continue;
+      this._highlightedTokenIds.push(unitId);
+      token.style.boxShadow = '0 0 12px 4px rgba(255,80,20,0.8)';
+      token.style.filter = 'brightness(1.3)';
+      token.style.transform = 'scale(1.15)';
     }
   }
 
@@ -474,6 +484,17 @@ class HexGridRenderer {
       delete el.dataset.cardTarget;
     }
     this._cardTargetKeys = [];
+    // Clear token highlights
+    if (this._highlightedTokenIds) {
+      for (const unitId of this._highlightedTokenIds) {
+        const token = this._tokens[unitId];
+        if (!token) continue;
+        token.style.boxShadow = '';
+        token.style.filter = '';
+        token.style.transform = '';
+      }
+      this._highlightedTokenIds = [];
+    }
   }
 
   destroy() {
