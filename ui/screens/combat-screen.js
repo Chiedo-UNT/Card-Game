@@ -99,7 +99,11 @@ class CombatScreen {
       volonte: stats.volonte || 3,
       handSize: 5,
       enduranceRegen: 2,
-      deckList: run.deck && run.deck.length ? run.deck : (arch.startingCards || []),
+      deckList: (run.deck && run.deck.length ? run.deck : (arch.startingCards || [])).concat(
+        // Ensure new test cards are always available for testing
+        ['charge_heroique', 'boule_de_feu', 'mur_de_glace', 'elevation_terrain', 'magic_shield']
+          .filter(id => !(run.deck || arch.startingCards || []).includes(id))
+      ),
       weapons: run.equippedWeapons || [null, null],
     };
 
