@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<!--
+  DEV PAGE — Map module standalone
+  ─────────────────────────────────
+  Charge uniquement les dépendances de la carte du monde.
+  Les nœuds de combat/élite/boss sont résolus automatiquement
+  comme des victoires (mock CombatScreen) pour tester la progression
+  de la carte sans avoir à jouer de combat.
+
+  Lancer depuis la racine du projet :
+    python3 -m http.server 8080
+    → http://localhost:8080/dev/map.html
+-->
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[DEV] Map — Card Game</title>
+
+  <!-- Design system (chemins relatifs depuis dev/) -->
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/screens.css">
+  <link rel="stylesheet" href="../styles/map.css">
+
+  <style>
+    /* ── Bandeau DEV ─────────────────────────────── */
+    #dev-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: #c0392b; color: #fff;
+      font: 700 0.75rem monospace;
+      padding: 4px 12px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    #dev-bar span { opacity: .7; font-weight: 400; }
+    #dev-bar button {
+      margin-left: auto;
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+      color: #fff; font: inherit; padding: 2px 10px; cursor: pointer;
+      border-radius: 3px;
+    }
+    #dev-bar button:hover { background: rgba(255,255,255,.3); }
+
+    /* ── Toast de résolution automatique ────────── */
+    #dev-toast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: rgba(39,174,96,.9); color: #fff;
+      font: 600 0.85rem monospace;
+      padding: 8px 20px; border-radius: 6px;
+      opacity: 0; transition: opacity .25s;
+      pointer-events: none; z-index: 9998;
+    }
+    #dev-toast.show { opacity: 1; }
+
+    /* ── Layout ──────────────────────────────────── */
+    body { padding-top: 26px; } /* espace pour le bandeau */
+    #app { position: relative; }
+
+    /* Assure que screen-map prend tout l'espace */
+    #screen-map {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 26px);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Bandeau DEV -->
+<div id="dev-bar">
+  🗺 MAP DEV MODE
+  <span>Combats → victoire auto · Cliquer un nœud pour progresser</span>
+  <button onclick="DevMap.resetRun()">↺ Nouveau run</button>
+  <button onclick="DevMap.dumpState()">⬇ Dump état</button>
+</div>
+
+<!-- Toast -->
+<div id="dev-toast"></div>
+
+<!-- Conteneur principal (même structure que index.html) -->
+<div id="app" role="main">
+  <div id="screen-map"  class="screen"></div>
+
+  <!-- Stubs des écrans appelés par la map (jamais affichés en mode dev) -->
+  <div id="screen-combat"   class="screen" style="display:none"></div>
+  <div id="screen-merchant" class="screen" style="display:none"></div>
+  <div id="screen-forge"    class="screen" style="display:none"></div>
+  <div id="screen-result"   class="screen" style="display:none"></div>
+  <div id="screen-talent"   class="screen" style="display:none"></div>
+  <div id="screen-menu"     class="screen" style="display:none"></div>
+  <div id="screen-character-creation" class="screen" style="display:none"></div>
+  <div id="screen-character-select"   class="screen" style="display:none"></div>
+  <div id="screen-collection"         class="screen" style="display:none"></div>
+</div>
+
+<!-- ── Core (ordre obligatoire) ───────────────────────────────────── -->
+<script src="../core/hex.js"></script>
+<script src="../core/tags.js"></script>
+<script src="../core/i18n.js"></script>
+<script src="../core/save.js"></script>
+<script src="../core/engine.js"></script>
+<script src="../core/map.js"></script>
+
+<!-- ── Écran map ──────────────────────────────────────────────────── -->
+<script src="../ui/screens/map-screen.js"></script>
+
+<!-- ── Stubs des screens appelés par map-screen ──────────────────── -->
+<script>
+(function () {
+
+  // ── MockCombatScreen ──────────────────────────────────────────────
+  // Remplace CombatScreen : résout immédiatement le combat comme une
+  // victoire, puis retourne à la carte.
+  class MockCombatScreen {
+    constructor(params) {
+      this._params = params || {};
+    }
+    init() {
+      const nodeType = (this._params.nodeType || 'combat');
+      DevMap._toast(`⚔ ${nodeType} → victoire automatique`);
+      // Simuler un gain d'or
+      const run = Save.getCurrentRun();
+      if (run) {
+        run.gold = (run.gold || 0) + (nodeType === 'boss' ? 50 : nodeType === 'elite' ? 25 : 10);
+        Save.saveRunState(run);
+      }
+      // Revenir à la carte après un court délai pour voir le toast
+      setTimeout(() => Engine.showScreen('map'), 600);
+    }
+    destroy() {}
+  }
+
+  // ── MockMerchantScreen ────────────────────────────────────────────
+  class MockMerchantScreen {
+    constructor(params) { this._params = params; }
+    init() {
+      DevMap._toast('💰 Marchand — retour automatique');
+      setTimeout(() => Engine.showScreen('map'), 800);
+    }
+    destroy() {}
+  }
+
+  // ── MockForgeScreen ───────────────────────────────────────────────
+  class MockForgeScreen {
+    constructor(params) { this._params = params; }
+    init() {
+      DevMap._toast('⚒ Forge — retour automatique');
+      setTimeout(() => Engine.showScreen('map'), 800);
+    }
+    destroy() {}
+  }
+
+  // ── MockResultScreen (repos / événement / victoire / défaite) ────
+  class MockResultScreen {
+    constructor(params) { this._params = params || {}; }
+    init() {
+      const type = this._params.type || 'result';
+      if (type === 'rest') {
+        // Soigner le joueur comme le ferait le vrai écran
+        const run = Save.getCurrentRun();
+        if (run) {
+          run.hp = Math.min((run.hp || 0) + 20, 100);
+          Save.saveRunState(run);
+        }
+        DevMap._toast('🔥 Repos — +20 HP');
+      } else if (type === 'event') {
+        DevMap._toast('✨ Événement — résolu automatiquement');
+      } else {
+        DevMap._toast(`📋 Résultat (${type})`);
+      }
+      setTimeout(() => Engine.showScreen('map'), 800);
+    }
+    destroy() {}
+  }
+
+  // Exposer les mocks sur window pour que Engine.showScreen les trouve
+  window.CombatScreen  = MockCombatScreen;
+  window.MerchantScreen = MockMerchantScreen;
+  window.ForgeScreen   = MockForgeScreen;
+  window.ResultScreen  = MockResultScreen;
+
+})();
+</script>
+
+<!-- ── Utilitaires DEV ──────────────────────────────────────────────── -->
+<script>
+const DevMap = {
+
+  // Toast discret pour les résolutions auto
+  _toast(msg) {
+    const el = document.getElementById('dev-toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+  },
+
+  // Réinitialiser le run (nouvelle seed, nouveau personnage dev)
+  resetRun() {
+    const charId = this._ensureDevChar();
+    Save.startRun(charId, []); // deck vide pour le mode dev
+    Engine.showScreen('map');
+    this._toast('↺ Nouveau run généré');
+  },
+
+  // Créer un personnage de dev s'il n'existe pas, retourne l'id (string)
+  _ensureDevChar() {
+    const existing = Object.values(Save.state.characters || {})
+      .find(c => c.name === '__dev__');
+    if (existing) return existing.id;
+    const stats = { force:5, dexterite:5, intelligence:5, endurance:5, volonte:5, rapidite:5 };
+    const char = Save.createCharacter('__dev__', 'guerrier', stats); // retourne l'objet char
+    return char.id;
+  },
+
+  // Afficher l'état brut dans la console
+  dumpState() {
+    const run = Save.getCurrentRun();
+    console.group('[DEV] Run state');
+    console.log('currentNode:', run?.currentNode);
+    console.log('visitedNodes:', run?.visitedNodes);
+    console.log('gold:', run?.gold);
+    console.log('hp:', run?.hp);
+    console.log('mapData nodes:', run?.mapData?.nodes?.length, 'edges:', run?.mapData?.edges?.length);
+    console.groupEnd();
+    this._toast('⬇ État loggé dans la console');
+  },
+};
+</script>
+
+<!-- ── Bootstrap ──────────────────────────────────────────────────── -->
+<script>
+(async function boot() {
+  // Init moteur minimal (pas de loadModule — pas besoin de cartes/ennemis)
+  await I18n.init('fr');
+
+  // Charger les chaînes de localisation du module base si disponibles
+  try { await I18n.loadModuleStrings('../modules/base', 'fr'); } catch(e) { /* optionnel */ }
+
+  // Init Save
+  Save.load();
+
+  // Enregistrer Engine.bus (Engine ne démarre pas complètement, on l'initialise manuellement)
+  Engine.state = Save.state;
+
+  // Patch Engine.showScreen pour mapper les noms d'écran aux classes disponibles
+  const _screenMap = {
+    map:      'MapScreen',
+    combat:   'CombatScreen',
+    merchant: 'MerchantScreen',
+    forge:    'ForgeScreen',
+    result:   'ResultScreen',
+    talent:   'MockResultScreen', // stub
+    menu:     'MapScreen',        // redirige menu → map en mode dev
+  };
+
+  Engine._currentScreen = null;
+  Engine.showScreen = function(name, params) {
+    // Détruire l'écran précédent
+    if (this._currentScreen?.destroy) this._currentScreen.destroy();
+
+    // Masquer tous les écrans
+    document.querySelectorAll('.screen').forEach(el => el.style.display = 'none');
+
+    // Trouver la div cible
+    const screenId = `screen-${name}`;
+    const el = document.getElementById(screenId);
+    if (el) el.style.display = '';
+
+    // Instancier l'écran
+    const className = _screenMap[name] || (name.charAt(0).toUpperCase() + name.slice(1) + 'Screen');
+    const ScreenClass = window[className];
+    if (!ScreenClass) {
+      console.warn(`[DEV] showScreen('${name}') : classe ${className} introuvable, retour map`);
+      Engine.showScreen('map');
+      return;
+    }
+    const screen = new ScreenClass(params);
+    this._currentScreen = screen;
+    if (screen.init) screen.init();
+    Engine.bus.emit('screen:change', { name, params });
+  };
+
+  // S'assurer qu'un personnage de dev et un run existent
+  const charId = DevMap._ensureDevChar();
+  if (!Save.getCurrentRun()) {
+    Save.startRun(charId, []); // deck vide pour le mode dev
+  } else {
+    Save.setCurrentChar(charId);
+  }
+
+  // Lancer la carte
+  Engine.showScreen('map');
+})();
+</script>
+
+</body>
+</html>

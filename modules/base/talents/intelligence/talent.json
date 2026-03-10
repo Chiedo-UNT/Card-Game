@@ -1,0 +1,73 @@
+{
+  "tree": "intelligence",
+  "talents": [
+    {
+      "id": "magie_amplifiee",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 2],
+      "prerequisites": [],
+      "position": { "col": 0, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "spell_damage_bonus", "value": 1 },
+        { "level": 2, "type": "spell_damage_bonus", "value": 2 },
+        { "level": 3, "type": "spell_damage_bonus", "value": 4 }
+      ]
+    },
+    {
+      "id": "reservoir_de_mana",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 1],
+      "prerequisites": [],
+      "position": { "col": 1, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "stat_bonus", "stat": "mana", "value": 2 },
+        { "level": 2, "type": "stat_bonus", "stat": "mana", "value": 4 },
+        { "level": 3, "type": "stat_bonus", "stat": "mana", "value": 6 }
+      ]
+    },
+    {
+      "id": "sort_amplificateur",
+      "maxLevel": 1,
+      "costPerLevel": [2],
+      "prerequisites": ["magie_amplifiee"],
+      "position": { "col": 0, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "unlock_mechanic", "mechanic": "spell_amplify" }
+      ]
+    },
+    {
+      "id": "flux_arcanique",
+      "maxLevel": 3,
+      "costPerLevel": [2, 2, 3],
+      "prerequisites": ["reservoir_de_mana"],
+      "position": { "col": 1, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "stat_bonus", "stat": "flux", "value": 1 },
+        { "level": 2, "type": "stat_bonus", "stat": "flux", "value": 2 },
+        { "level": 3, "type": "stat_bonus", "stat": "flux", "value": 3 }
+      ]
+    },
+    {
+      "id": "nova_magique",
+      "maxLevel": 1,
+      "costPerLevel": [3],
+      "prerequisites": ["sort_amplificateur"],
+      "position": { "col": 0, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "unlock_card", "card": "nova_magique" }
+      ]
+    },
+    {
+      "id": "maitrise_elementaire",
+      "maxLevel": 3,
+      "costPerLevel": [2, 3, 3],
+      "prerequisites": ["flux_arcanique"],
+      "position": { "col": 1, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "elemental_spell_bonus", "value": 0.10 },
+        { "level": 2, "type": "elemental_spell_bonus", "value": 0.20 },
+        { "level": 3, "type": "elemental_spell_bonus", "value": 0.35 }
+      ]
+    }
+  ]
+}

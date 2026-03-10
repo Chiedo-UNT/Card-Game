@@ -1,0 +1,66 @@
+{
+  "id": "arc_de_base",
+  "rarity": "Commune",
+  "subtype": "arc",
+  "tags": ["Distance", "Percant", "Arc"],
+  "portee": { "min": 2, "max": 4 },
+  "stats": { "damage_bonus": 1 },
+  "typeCards": ["tir", "tir_rapide"],
+  "subtypeCards": ["tir_precis", "pluie_de_fleches"],
+  "specificCards": [],
+  "cardDefinitions": [
+    {
+      "id": "tir",
+      "rarity": "Commune",
+      "tags": ["Attaque", "Distance", "Percant", "Commune"],
+      "requires": [],
+      "portee": { "min": 2, "max": 4 },
+      "forme": "single",
+      "cost": { "initiative": 1 },
+      "effects": [
+        { "type": "damage", "value": 3, "scaling": { "stat": "dexterite", "ratio": 0.5 } }
+      ],
+      "forgeable": false
+    },
+    {
+      "id": "tir_rapide",
+      "rarity": "Commune",
+      "tags": ["Attaque", "Distance", "Percant", "Commune"],
+      "requires": [],
+      "portee": { "min": 2, "max": 4 },
+      "forme": "single",
+      "cost": { "initiative": 1 },
+      "effects": [
+        { "type": "damage", "value": 2, "scaling": { "stat": "dexterite", "ratio": 0.4 }, "hits": 2 }
+      ],
+      "forgeable": false
+    },
+    {
+      "id": "tir_precis",
+      "rarity": "Commune",
+      "tags": ["Attaque", "Distance", "Percant", "Arc", "Commune"],
+      "requires": [],
+      "portee": { "min": 2, "max": 5 },
+      "forme": "single",
+      "cost": { "initiative": 2 },
+      "effects": [
+        { "type": "damage", "value": 5, "scaling": { "stat": "dexterite", "ratio": 0.7 }, "armorPenetration": 2, "condition": "target_stationary" }
+      ],
+      "forgeable": false
+    },
+    {
+      "id": "pluie_de_fleches",
+      "rarity": "Rare",
+      "tags": ["Attaque", "Distance", "Arc", "Zone", "Rare"],
+      "requires": [],
+      "portee": { "min": 2, "max": 4 },
+      "forme": "zone",
+      "zoneRadius": 1,
+      "cost": { "initiative": 2, "endurance": 1 },
+      "effects": [
+        { "type": "damage", "value": 2, "scaling": { "stat": "dexterite", "ratio": 0.3 }, "target": "all_enemies_in_zone" }
+      ],
+      "forgeable": false
+    }
+  ]
+}

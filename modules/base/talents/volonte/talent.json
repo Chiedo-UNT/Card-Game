@@ -1,0 +1,75 @@
+{
+  "tree": "volonte",
+  "talents": [
+    {
+      "id": "concentration_mentale",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 2],
+      "prerequisites": [],
+      "position": { "col": 0, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "mental_resistance_bonus", "value": 2 },
+        { "level": 2, "type": "mental_resistance_bonus", "value": 4 },
+        { "level": 3, "type": "mental_resistance_bonus", "value": 6 }
+      ]
+    },
+    {
+      "id": "flux_de_mana",
+      "maxLevel": 3,
+      "costPerLevel": [1, 2, 2],
+      "prerequisites": [],
+      "position": { "col": 1, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "stat_bonus", "stat": "flux", "value": 1 },
+        { "level": 2, "type": "stat_bonus", "stat": "flux", "value": 2 },
+        { "level": 3, "type": "stat_bonus", "stat": "flux", "value": 3 }
+      ]
+    },
+    {
+      "id": "puissance_mentale",
+      "maxLevel": 3,
+      "costPerLevel": [1, 2, 2],
+      "prerequisites": ["concentration_mentale"],
+      "position": { "col": 0, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "volonte_spell_bonus", "value": 0.10 },
+        { "level": 2, "type": "volonte_spell_bonus", "value": 0.20 },
+        { "level": 3, "type": "volonte_spell_bonus", "value": 0.30 }
+      ]
+    },
+    {
+      "id": "absorption_magique",
+      "maxLevel": 3,
+      "costPerLevel": [2, 2, 3],
+      "prerequisites": ["flux_de_mana"],
+      "position": { "col": 1, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "magic_damage_to_mana_chance", "value": 0.10 },
+        { "level": 2, "type": "magic_damage_to_mana_chance", "value": 0.20 },
+        { "level": 3, "type": "magic_damage_to_mana_chance", "value": 0.30 }
+      ]
+    },
+    {
+      "id": "sort_de_domination",
+      "maxLevel": 1,
+      "costPerLevel": [3],
+      "prerequisites": ["puissance_mentale"],
+      "position": { "col": 0, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "unlock_card", "card": "domination" }
+      ]
+    },
+    {
+      "id": "mana_infini",
+      "maxLevel": 3,
+      "costPerLevel": [3, 3, 3],
+      "prerequisites": ["absorption_magique"],
+      "position": { "col": 1, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "stat_bonus", "stat": "mana", "value": 3 },
+        { "level": 2, "type": "stat_bonus", "stat": "mana", "value": 6 },
+        { "level": 3, "type": "stat_bonus", "stat": "mana", "value": 10 }
+      ]
+    }
+  ]
+}

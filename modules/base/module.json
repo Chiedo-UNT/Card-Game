@@ -1,0 +1,12 @@
+{
+  "id": "base",
+  "version": "1.0.0",
+  "name": "Base Module",
+  "description": "Core game content",
+  "cards": ["magic_blast", "magic_shield", "armure_de_mage"],
+  "weapons": ["epee_de_base", "arc_de_base"],
+  "enemies": ["gobelin", "garde_gobelin"],
+  "archetypes": ["mage", "roublard", "guerrier", "berzerk"],
+  "talents": ["force", "dexterite", "intelligence", "endurance", "volonte", "rapidite", "map"],
+  "events": ["voyageur_bless"]
+}

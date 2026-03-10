@@ -1,0 +1,227 @@
+/* ================================================================
+   MAP.CSS — World map hex grid screen
+   ================================================================ */
+
+/* ── Map screen layout ─────────────────────────────────────────── */
+#screen-map {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #08080f;
+}
+
+.map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: rgba(10, 10, 20, 0.95);
+  border-bottom: 1px solid var(--color-border);
+  z-index: 10;
+}
+
+.map-title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  color: var(--color-accent);
+  letter-spacing: 0.06em;
+}
+
+/* ── Player resource bar ───────────────────────────────────────── */
+.map-resources {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.resource-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.resource-chip__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.resource-chip--gold    .resource-chip__dot { background: var(--color-accent); }
+.resource-chip--ether   .resource-chip__dot { background: var(--color-accent-2); }
+.resource-chip--life    .resource-chip__dot { background: var(--color-life); }
+
+/* ── Map viewport ──────────────────────────────────────────────── */
+.map-viewport {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.map-canvas {
+  position: relative;
+  flex-shrink: 0;
+  transform-origin: center center;
+}
+
+/* ── Map hex nodes ─────────────────────────────────────────────── */
+.map-hex {
+  position: absolute;
+  width: 56px;
+  height: 48px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.map-hex--fog {
+  background: rgba(20,20,35,0.8);
+  pointer-events: none;
+}
+
+.map-hex--visible {
+  background: rgba(255,255,255,0.04);
+}
+
+.map-hex--current {
+  background: rgba(201, 162, 39, 0.25);
+  box-shadow: 0 0 16px rgba(201, 162, 39, 0.4);
+}
+
+.map-hex--reachable {
+  background: rgba(45, 90, 139, 0.35);
+  cursor: pointer;
+}
+
+.map-hex--reachable:hover {
+  background: rgba(45, 90, 139, 0.55);
+  transform: scale(1.08);
+}
+
+/* ── Node type colors ──────────────────────────────────────────── */
+.map-node { position: relative; }
+
+.map-node__icon {
+  font-size: 1.4rem;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.8));
+}
+
+.map-node--combat   .map-node__icon { color: #e74c3c; }
+.map-node--elite    .map-node__icon { color: #c0392b; }
+.map-node--boss     .map-node__icon { color: #8e0000; }
+.map-node--merchant .map-node__icon { color: #f39c12; }
+.map-node--event    .map-node__icon { color: #9b59b6; }
+.map-node--rest     .map-node__icon { color: #27ae60; }
+.map-node--forge    .map-node__icon { color: #e67e22; }
+.map-node--unknown  .map-node__icon { color: #555577; }
+
+/* ── Hex connections / paths ───────────────────────────────────── */
+.map-path {
+  position: absolute;
+  height: 2px;
+  background: var(--color-border);
+  transform-origin: left center;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.map-path--visited {
+  background: var(--color-accent);
+  opacity: 0.6;
+}
+
+/* ── Node tooltip ──────────────────────────────────────────────── */
+.map-tooltip {
+  position: fixed;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  pointer-events: none;
+  z-index: 100;
+  min-width: 120px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.map-tooltip__title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--color-accent);
+}
+
+.map-tooltip__desc {
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+}
+
+/* ── Map footer / move button ──────────────────────────────────── */
+.map-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(10, 10, 20, 0.95);
+  border-top: 1px solid var(--color-border);
+}
+
+.btn-move {
+  padding: 10px 32px;
+  background: var(--color-accent-3);
+  color: var(--color-text);
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: var(--text-base);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.btn-move:hover  { background: #3a6fa8; transform: translateY(-1px); }
+.btn-move:active { transform: translateY(0); }
+.btn-move:disabled { background: var(--color-text-muted); cursor: not-allowed; transform: none; }
+
+/* ── Node type legend ──────────────────────────────────────────── */
+.map-legend {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: rgba(10,10,20,0.9);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 10;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

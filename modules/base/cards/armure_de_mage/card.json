@@ -1,0 +1,20 @@
+{
+  "id": "armure_de_mage",
+  "rarity": "Rare",
+  "tags": ["Skill", "Magie", "Rare"],
+  "requires": ["Magie"],
+  "portee": { "min": 0, "max": 0 },
+  "forme": "self",
+  "cost": { "initiative": 1, "mana": 4 },
+  "effects": [
+    { "type": "buff", "stat": "armor", "value": 1, "duration": -1 }
+  ],
+  "forgeable": true,
+  "forgeTree": {
+    "attributes": {
+      "cost.initiative": { "current": 1, "min": 0, "forgeCostTable": [25, 15, 10, 5, 2, 0] },
+      "cost.mana":       { "current": 4, "min": 1, "forgeCostTable": [25, 20, 15, 10, 5, 0] },
+      "effects.0.value": { "current": 1, "max": 5,  "forgeCostTable": [0, 20, 35, 50, 70, 100] }
+    }
+  }
+}

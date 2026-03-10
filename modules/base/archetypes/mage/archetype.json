@@ -1,0 +1,36 @@
+{
+  "id": "mage",
+  "stats": {
+    "vie": 55,
+    "mana": 7,
+    "endurance": 3,
+    "force": 2,
+    "dexterite": 3,
+    "intelligence": 9,
+    "volonte": 6,
+    "rapidite": 4,
+    "initiative": 4,
+    "armor": 0
+  },
+  "flux": 2,
+  "startingWeapon": null,
+  "startingCards": [
+    "magic_blast",
+    "magic_blast",
+    "magic_blast",
+    "magic_shield",
+    "magic_shield",
+    "armure_de_mage"
+  ],
+  "startingTalentPoints": 0,
+  "startingGold": 50,
+  "startingEtherPowder": 0,
+  "talentAffinities": ["intelligence", "volonte"],
+  "passives": [
+    {
+      "id": "arcane_mastery",
+      "effect": "spell_damage_bonus",
+      "value": 2
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "id": "berzerk",
+  "stats": {
+    "vie": 80,
+    "mana": 1,
+    "endurance": 6,
+    "force": 9,
+    "dexterite": 5,
+    "intelligence": 1,
+    "volonte": 5,
+    "rapidite": 5,
+    "initiative": 5,
+    "armor": 1
+  },
+  "flux": 1,
+  "startingWeapon": "epee_de_base",
+  "startingCards": [
+    "slash",
+    "slash",
+    "slash",
+    "slash",
+    "thrust",
+    "parade"
+  ],
+  "startingTalentPoints": 0,
+  "startingGold": 40,
+  "startingEtherPowder": 0,
+  "talentAffinities": ["force", "rapidite"],
+  "passives": [
+    {
+      "id": "blood_rage",
+      "effect": "damage_bonus_per_missing_hp_pct",
+      "value": 0.5,
+      "description": "Gain +0.5% damage for each % of missing HP"
+    }
+  ]
+}

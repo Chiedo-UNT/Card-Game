@@ -1,0 +1,36 @@
+{
+  "id": "roublard",
+  "stats": {
+    "vie": 65,
+    "mana": 3,
+    "endurance": 5,
+    "force": 4,
+    "dexterite": 9,
+    "intelligence": 3,
+    "volonte": 3,
+    "rapidite": 8,
+    "initiative": 7,
+    "armor": 0
+  },
+  "flux": 2,
+  "startingWeapon": "epee_de_base",
+  "startingCards": [
+    "thrust",
+    "thrust",
+    "thrust",
+    "slash",
+    "parade",
+    "riposte"
+  ],
+  "startingTalentPoints": 0,
+  "startingGold": 55,
+  "startingEtherPowder": 0,
+  "talentAffinities": ["dexterite", "rapidite"],
+  "passives": [
+    {
+      "id": "first_strike",
+      "effect": "initiative_bonus",
+      "value": 2
+    }
+  ]
+}

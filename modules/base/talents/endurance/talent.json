@@ -1,0 +1,75 @@
+{
+  "tree": "endurance",
+  "talents": [
+    {
+      "id": "souffle_profond",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 1],
+      "prerequisites": [],
+      "position": { "col": 0, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "stat_bonus", "stat": "endurance", "value": 2 },
+        { "level": 2, "type": "stat_bonus", "stat": "endurance", "value": 4 },
+        { "level": 3, "type": "stat_bonus", "stat": "endurance", "value": 6 }
+      ]
+    },
+    {
+      "id": "recuperation_rapide",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 2],
+      "prerequisites": [],
+      "position": { "col": 1, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "endurance_cost_reduction", "value": 1 },
+        { "level": 2, "type": "endurance_cost_reduction", "value": 2 },
+        { "level": 3, "type": "endurance_cost_reduction", "value": 3 }
+      ]
+    },
+    {
+      "id": "second_souffle",
+      "maxLevel": 1,
+      "costPerLevel": [2],
+      "prerequisites": ["souffle_profond"],
+      "position": { "col": 0, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "unlock_card", "card": "second_souffle" }
+      ]
+    },
+    {
+      "id": "constitution_de_fer",
+      "maxLevel": 3,
+      "costPerLevel": [1, 2, 2],
+      "prerequisites": ["recuperation_rapide"],
+      "position": { "col": 1, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "stat_bonus", "stat": "vie", "value": 5 },
+        { "level": 2, "type": "stat_bonus", "stat": "vie", "value": 10 },
+        { "level": 3, "type": "stat_bonus", "stat": "vie", "value": 15 }
+      ]
+    },
+    {
+      "id": "endurance_de_combat",
+      "maxLevel": 3,
+      "costPerLevel": [2, 2, 2],
+      "prerequisites": ["second_souffle"],
+      "position": { "col": 0, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "physical_card_endurance_reduction", "value": 1 },
+        { "level": 2, "type": "physical_card_endurance_reduction", "value": 1 },
+        { "level": 3, "type": "physical_card_endurance_reduction", "value": 2 }
+      ]
+    },
+    {
+      "id": "guerrier_infatigable",
+      "maxLevel": 3,
+      "costPerLevel": [2, 3, 3],
+      "prerequisites": ["constitution_de_fer"],
+      "position": { "col": 1, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "stat_bonus", "stat": "endurance", "value": 3 },
+        { "level": 2, "type": "stat_bonus", "stat": "endurance", "value": 5 },
+        { "level": 3, "type": "stat_bonus", "stat": "endurance", "value": 8, "type2": "endurance_regen_per_turn", "value2": 1 }
+      ]
+    }
+  ]
+}

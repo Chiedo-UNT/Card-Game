@@ -1,0 +1,73 @@
+{
+  "tree": "dexterite",
+  "talents": [
+    {
+      "id": "esquive_instinctive",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 2],
+      "prerequisites": [],
+      "position": { "col": 0, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "dodge_chance_bonus", "value": 0.05 },
+        { "level": 2, "type": "dodge_chance_bonus", "value": 0.10 },
+        { "level": 3, "type": "dodge_chance_bonus", "value": 0.15 }
+      ]
+    },
+    {
+      "id": "lame_acrobatique",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 2],
+      "prerequisites": [],
+      "position": { "col": 1, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "tag_damage_bonus", "tag": "Estoc", "value": 1 },
+        { "level": 2, "type": "tag_damage_bonus", "tag": "Estoc", "value": 2 },
+        { "level": 3, "type": "tag_damage_bonus", "tag": "Estoc", "value": 3 }
+      ]
+    },
+    {
+      "id": "finesse",
+      "maxLevel": 3,
+      "costPerLevel": [1, 2, 2],
+      "prerequisites": ["lame_acrobatique"],
+      "position": { "col": 1, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "armor_penetration", "value": 1 },
+        { "level": 2, "type": "armor_penetration", "value": 2 },
+        { "level": 3, "type": "armor_penetration", "value": 3 }
+      ]
+    },
+    {
+      "id": "contre_attaque",
+      "maxLevel": 3,
+      "costPerLevel": [1, 2, 2],
+      "prerequisites": ["esquive_instinctive"],
+      "position": { "col": 0, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "after_dodge_damage_bonus", "value": 0.15 },
+        { "level": 2, "type": "after_dodge_damage_bonus", "value": 0.25 },
+        { "level": 3, "type": "after_dodge_damage_bonus", "value": 0.40 }
+      ]
+    },
+    {
+      "id": "frappe_eclair",
+      "maxLevel": 1,
+      "costPerLevel": [2],
+      "prerequisites": ["contre_attaque"],
+      "position": { "col": 0, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "unlock_card", "card": "frappe_eclair" }
+      ]
+    },
+    {
+      "id": "mille_coupures",
+      "maxLevel": 1,
+      "costPerLevel": [3],
+      "prerequisites": ["finesse"],
+      "position": { "col": 1, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "unlock_card", "card": "mille_coupures" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "gobelin",
+  "tier": 1,
+  "stats": {
+    "vie": 18,
+    "mana": 0,
+    "endurance": 3,
+    "force": 3,
+    "dexterite": 5,
+    "intelligence": 1,
+    "volonte": 1,
+    "rapidite": 5,
+    "initiative": 5,
+    "armor": 0
+  },
+  "ai": "aggressive",
+  "cards": [
+    {
+      "id": "griffure",
+      "tags": ["Attaque", "CaC"],
+      "portee": { "min": 1, "max": 1 },
+      "forme": "single",
+      "cost": { "initiative": 1 },
+      "effects": [
+        { "type": "damage", "value": 3, "scaling": { "stat": "dexterite", "ratio": 0.4 } }
+      ]
+    },
+    {
+      "id": "fuite",
+      "tags": ["Déplacement"],
+      "portee": { "min": 0, "max": 0 },
+      "forme": "self",
+      "cost": { "initiative": 1 },
+      "effects": [
+        { "type": "move", "value": 2, "direction": "away_from_target" }
+      ]
+    }
+  ],
+  "loot": {
+    "gold": [1, 4],
+    "exp": 8,
+    "dropTable": []
+  },
+  "size": 1,
+  "portrait": "assets/enemies/gobelin.png"
+}

@@ -1,0 +1,425 @@
+/* ================================================================
+   COMBAT.CSS — Hex combat screen layout & components
+   ================================================================ */
+
+/* ── Combat screen layout ──────────────────────────────────────── */
+#screen-combat {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr;
+  height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, #12121e 0%, #0a0a14 100%);
+}
+
+/* ── Top HUD ───────────────────────────────────────────────────── */
+.combat-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: rgba(10, 10, 20, 0.9);
+  border-bottom: 1px solid var(--color-border);
+  z-index: 50;
+  gap: 12px;
+}
+
+/* ── Combatant info panel ──────────────────────────────────────── */
+.combatant-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.combatant-portrait {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  border: 2px solid var(--color-border);
+  background: var(--color-panel);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.combatant-info {
+  min-width: 0;
+}
+
+.combatant-name {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Stat bars ─────────────────────────────────────────────────── */
+.stat-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 100px;
+}
+
+.stat-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-bar-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+  width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.stat-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.stat-bar-fill--life      { background: var(--color-life); }
+.stat-bar-fill--mana      { background: var(--color-mana); }
+.stat-bar-fill--endurance { background: var(--color-endurance); }
+
+.stat-bar-value {
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+  min-width: 32px;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+/* ── Initiative / turn tracker ─────────────────────────────────── */
+.turn-tracker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.turn-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.turn-indicator {
+  font-size: var(--text-lg);
+  font-weight: 900;
+  color: var(--color-accent);
+  padding: 4px 12px;
+  border: 2px solid var(--color-accent);
+  border-radius: 6px;
+  text-align: center;
+  min-width: 120px;
+  background: rgba(201, 162, 39, 0.08);
+}
+
+.turn-indicator.enemy-turn {
+  color: var(--color-danger-light);
+  border-color: var(--color-danger-light);
+  background: rgba(231, 76, 60, 0.08);
+}
+
+/* ── Hex battlefield ───────────────────────────────────────────── */
+.combat-battlefield {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.hex-grid {
+  position: relative;
+}
+
+.hex-cell {
+  position: absolute;
+  width: 60px;
+  height: 52px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.hex-cell:hover                  { background: rgba(255,255,255,0.10); }
+.hex-cell.reachable              { background: rgba(45, 90, 139, 0.25); }
+.hex-cell.reachable:hover        { background: rgba(45, 90, 139, 0.45); }
+.hex-cell.attackable             { background: rgba(192, 57, 43, 0.25); }
+.hex-cell.attackable:hover       { background: rgba(192, 57, 43, 0.45); }
+.hex-cell.selected               { background: rgba(201, 162, 39, 0.30); }
+
+/* ── Combatant token on hex ────────────────────────────────────── */
+.combatant-token {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid var(--color-accent);
+  background: var(--color-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 5;
+  transition: left 0.25s ease, top 0.25s ease;
+}
+
+.combatant-token.player { border-color: var(--color-accent); }
+.combatant-token.enemy  { border-color: var(--color-danger-light); }
+
+.combatant-token img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.combatant-token__hp {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* ── Status effects on token ───────────────────────────────────── */
+.token-statuses {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+}
+
+.status-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  cursor: default;
+}
+
+/* ── Bottom action bar ─────────────────────────────────────────── */
+.combat-action-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 16px 12px;
+  background: rgba(10, 10, 20, 0.95);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Hand display ──────────────────────────────────────────────── */
+.hand-area {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  min-height: 120px;
+  perspective: 800px;
+}
+
+/* ── Deck / discard counters ───────────────────────────────────── */
+.pile-counters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pile-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.pile-counter__icon {
+  width: 36px;
+  height: 50px;
+  border-radius: 4px;
+  border: 2px solid var(--color-border);
+  background: var(--color-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xl);
+  font-weight: 900;
+  color: var(--color-text-dim);
+  transition: border-color 0.15s;
+}
+
+.pile-counter:hover .pile-counter__icon { border-color: var(--color-accent); }
+
+.pile-counter__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── End turn button ───────────────────────────────────────────── */
+.btn-end-turn {
+  padding: 10px 24px;
+  background: var(--color-accent);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-weight: 900;
+  font-size: var(--text-base);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.btn-end-turn:hover  { background: #e0b530; transform: translateY(-1px); }
+.btn-end-turn:active { transform: translateY(0); }
+.btn-end-turn:disabled { background: var(--color-text-muted); cursor: not-allowed; transform: none; }
+
+/* ── QTE overlay ───────────────────────────────────────────────── */
+.qte-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  pointer-events: auto;
+}
+
+.qte-prompt {
+  font-size: var(--text-2xl);
+  font-weight: 900;
+  color: var(--color-accent);
+  text-shadow: 0 0 20px rgba(201,162,39,0.5);
+  animation: qte-pulse 0.5s ease infinite alternate;
+}
+
+@keyframes qte-pulse {
+  from { transform: scale(1); }
+  to   { transform: scale(1.05); }
+}
+
+.qte-bar-track {
+  width: 300px;
+  height: 20px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--color-border);
+}
+
+.qte-bar-fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 10px;
+  transition: width 0.05s linear;
+}
+
+.qte-window {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(39, 174, 96, 0.5);
+  border-radius: 10px;
+}
+
+.qte-result {
+  font-size: var(--text-xl);
+  font-weight: 900;
+}
+
+.qte-result.success { color: var(--color-success-light); }
+.qte-result.fail    { color: var(--color-danger-light); }
+
+/* ── Combat result overlay ─────────────────────────────────────── */
+.combat-result-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.85);
+  z-index: 300;
+}
+
+.combat-result-title {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 900;
+  margin-bottom: 24px;
+  animation: result-appear 0.5s ease;
+}
+
+.combat-result-title.victory { color: var(--color-accent); }
+.combat-result-title.defeat  { color: var(--color-danger-light); }
+
+@keyframes result-appear {
+  from { opacity: 0; transform: scale(0.8) translateY(-20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.combat-loot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 24px;
+  background: var(--color-panel);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  min-width: 240px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.loot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: var(--text-base);
+  color: var(--color-text);
+}
+
+.loot-row span:last-child {
+  font-weight: 700;
+  color: var(--color-accent);
+}

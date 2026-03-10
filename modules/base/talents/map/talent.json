@@ -1,0 +1,63 @@
+{
+  "tree": "map",
+  "talents": [
+    {
+      "id": "vision_etendue",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 2],
+      "prerequisites": [],
+      "position": { "col": 0, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "map_vision_range", "value": 1 },
+        { "level": 2, "type": "map_vision_range", "value": 2 },
+        { "level": 3, "type": "map_vision_range", "value": 3 }
+      ]
+    },
+    {
+      "id": "marchand_ami",
+      "maxLevel": 3,
+      "costPerLevel": [1, 2, 2],
+      "prerequisites": [],
+      "position": { "col": 1, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "merchant_discount", "value": 0.05 },
+        { "level": 2, "type": "merchant_discount", "value": 0.10 },
+        { "level": 3, "type": "merchant_discount", "value": 0.15 }
+      ]
+    },
+    {
+      "id": "teleporation",
+      "maxLevel": 1,
+      "costPerLevel": [3],
+      "prerequisites": ["vision_etendue"],
+      "position": { "col": 0, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "map_teleport", "value": 2 }
+      ]
+    },
+    {
+      "id": "intuition_evenementielle",
+      "maxLevel": 3,
+      "costPerLevel": [1, 2, 2],
+      "prerequisites": ["marchand_ami"],
+      "position": { "col": 1, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "event_reveal_outcomes", "value": 1 },
+        { "level": 2, "type": "event_reveal_outcomes", "value": 2 },
+        { "level": 3, "type": "event_reveal_all_outcomes", "value": true }
+      ]
+    },
+    {
+      "id": "maitrise_de_la_forge",
+      "maxLevel": 3,
+      "costPerLevel": [2, 2, 3],
+      "prerequisites": ["teleporation", "intuition_evenementielle"],
+      "position": { "col": 0, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "forge_cost_reduction", "value": 0.10 },
+        { "level": 2, "type": "forge_cost_reduction", "value": 0.20 },
+        { "level": 3, "type": "forge_cost_reduction", "value": 0.30 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "guerrier",
+  "stats": {
+    "vie": 90,
+    "mana": 2,
+    "endurance": 7,
+    "force": 8,
+    "dexterite": 4,
+    "intelligence": 2,
+    "volonte": 4,
+    "rapidite": 3,
+    "initiative": 3,
+    "armor": 2
+  },
+  "flux": 1,
+  "startingWeapon": "epee_de_base",
+  "startingCards": [
+    "slash",
+    "slash",
+    "slash",
+    "thrust",
+    "parade",
+    "parade"
+  ],
+  "startingTalentPoints": 0,
+  "startingGold": 60,
+  "startingEtherPowder": 0,
+  "talentAffinities": ["force", "endurance"],
+  "passives": [
+    {
+      "id": "iron_will",
+      "effect": "damage_reduction_flat",
+      "value": 1
+    }
+  ]
+}

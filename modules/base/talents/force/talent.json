@@ -1,0 +1,75 @@
+{
+  "tree": "force",
+  "talents": [
+    {
+      "id": "mains_nues_basique",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 2],
+      "prerequisites": [],
+      "position": { "col": 0, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "unarmed_damage_bonus", "value": 1 },
+        { "level": 2, "type": "unarmed_damage_bonus", "value": 2 },
+        { "level": 3, "type": "unarmed_damage_bonus", "value": 3, "unlockCard": "frappe_brutale" }
+      ]
+    },
+    {
+      "id": "peau_epaisse",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 1],
+      "prerequisites": [],
+      "position": { "col": 1, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "armor_bonus", "value": 1 },
+        { "level": 2, "type": "armor_bonus", "value": 2 },
+        { "level": 3, "type": "armor_bonus", "value": 3 }
+      ]
+    },
+    {
+      "id": "frappe_lourde",
+      "maxLevel": 3,
+      "costPerLevel": [1, 2, 2],
+      "prerequisites": ["mains_nues_basique"],
+      "position": { "col": 0, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "blunt_damage_bonus", "value": 1 },
+        { "level": 2, "type": "blunt_damage_bonus", "value": 2 },
+        { "level": 3, "type": "blunt_damage_bonus", "value": 3, "unlockCard": "ecrasement" }
+      ]
+    },
+    {
+      "id": "muscles_dacier",
+      "maxLevel": 3,
+      "costPerLevel": [2, 2, 3],
+      "prerequisites": ["peau_epaisse"],
+      "position": { "col": 1, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "stat_bonus", "stat": "force", "value": 1 },
+        { "level": 2, "type": "stat_bonus", "stat": "force", "value": 2 },
+        { "level": 3, "type": "stat_bonus", "stat": "force", "value": 4 }
+      ]
+    },
+    {
+      "id": "charge",
+      "maxLevel": 1,
+      "costPerLevel": [2],
+      "prerequisites": ["frappe_lourde"],
+      "position": { "col": 0, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "unlock_card", "card": "charge" }
+      ]
+    },
+    {
+      "id": "indestructible",
+      "maxLevel": 3,
+      "costPerLevel": [2, 3, 3],
+      "prerequisites": ["muscles_dacier"],
+      "position": { "col": 1, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "damage_reduction_flat", "value": 1 },
+        { "level": 2, "type": "damage_reduction_flat", "value": 2 },
+        { "level": 3, "type": "damage_reduction_flat", "value": 3 }
+      ]
+    }
+  ]
+}

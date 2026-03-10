@@ -1,0 +1,59 @@
+{
+  "id": "garde_gobelin",
+  "tier": 2,
+  "stats": {
+    "vie": 32,
+    "mana": 0,
+    "endurance": 5,
+    "force": 5,
+    "dexterite": 4,
+    "intelligence": 1,
+    "volonte": 2,
+    "rapidite": 3,
+    "initiative": 3,
+    "armor": 3
+  },
+  "ai": "defensive",
+  "cards": [
+    {
+      "id": "coup_de_lance",
+      "tags": ["Attaque", "CaC", "Estoc"],
+      "portee": { "min": 1, "max": 2 },
+      "forme": "single",
+      "cost": { "initiative": 1 },
+      "effects": [
+        { "type": "damage", "value": 4, "scaling": { "stat": "force", "ratio": 0.5 } }
+      ]
+    },
+    {
+      "id": "bouclier_garde",
+      "tags": ["Défense", "CaC"],
+      "portee": { "min": 0, "max": 0 },
+      "forme": "self",
+      "cost": { "initiative": 1 },
+      "effects": [
+        { "type": "buff", "stat": "shield", "value": 6, "duration": 1, "condition": "next_hit" }
+      ]
+    },
+    {
+      "id": "coup_de_masse",
+      "tags": ["Attaque", "CaC", "Contondant"],
+      "portee": { "min": 1, "max": 1 },
+      "forme": "single",
+      "cost": { "initiative": 2 },
+      "effects": [
+        { "type": "damage", "value": 6, "scaling": { "stat": "force", "ratio": 0.6 } },
+        { "type": "debuff", "stat": "etourdi", "duration": 1, "chance": 0.3 }
+      ]
+    }
+  ],
+  "loot": {
+    "gold": [4, 9],
+    "exp": 18,
+    "dropTable": [
+      { "itemId": "epee_de_base", "chance": 0.05 }
+    ]
+  },
+  "size": 1,
+  "portrait": "assets/enemies/garde_gobelin.png"
+}

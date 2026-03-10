@@ -1,0 +1,64 @@
+{
+  "id": "voyageur_bless",
+  "type": "encounter",
+  "choices": [
+    {
+      "id": 0,
+      "requires": null,
+      "outcomes": [
+        {
+          "id": "good",
+          "weight": 40,
+          "effects": [
+            { "type": "unlock_merchant_discount", "value": 0.15, "duration": "permanent" }
+          ]
+        },
+        {
+          "id": "ally",
+          "weight": 30,
+          "effects": [
+            { "type": "add_ally", "duration": "next_combat" }
+          ]
+        },
+        {
+          "id": "bad",
+          "weight": 30,
+          "effects": [
+            { "type": "trigger_combat", "enemies": ["gobelin", "gobelin"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "requires": null,
+      "outcomes": [
+        {
+          "id": "nothing",
+          "weight": 100,
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "requires": null,
+      "outcomes": [
+        {
+          "id": "bad",
+          "weight": 50,
+          "effects": [
+            { "type": "trigger_combat", "enemies": ["garde_gobelin"] }
+          ]
+        },
+        {
+          "id": "nothing",
+          "weight": 50,
+          "effects": [
+            { "type": "add_gold", "value": [5, 12] }
+          ]
+        }
+      ]
+    }
+  ]
+}

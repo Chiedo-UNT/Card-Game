@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<!--
+  DEV PAGE — Combat module standalone
+  ─────────────────────────────────────
+  Charge uniquement les dépendances du combat.
+  ResultScreen est stubbé : victoire/défaite ramènent au combat
+  avec un toast, sans quitter la page.
+
+  Lancer depuis la racine du projet :
+    python3 -m http.server 8080
+    → http://localhost:8080/dev/combat.html
+-->
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[DEV] Combat — Card Game</title>
+
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/cards.css">
+  <link rel="stylesheet" href="../styles/combat.css">
+  <link rel="stylesheet" href="../styles/screens.css">
+  <link rel="stylesheet" href="../ui/ui.css">
+
+  <style>
+    /* ── Bandeau DEV ─────────────────────────────── */
+    #dev-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: #1a237e; color: #fff;
+      font: 700 0.75rem monospace;
+      padding: 4px 12px;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    #dev-bar span { opacity: .7; font-weight: 400; }
+    #dev-bar button, #dev-bar select {
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+      color: #fff; font: inherit; padding: 2px 8px; cursor: pointer;
+      border-radius: 3px;
+    }
+    #dev-bar button:hover { background: rgba(255,255,255,.3); }
+    #dev-bar select option { color: #000; }
+    .dev-sep { opacity: .3; }
+
+    /* ── Toast ───────────────────────────────────── */
+    #dev-toast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: rgba(39,174,96,.9); color: #fff;
+      font: 600 0.85rem monospace;
+      padding: 8px 20px; border-radius: 6px;
+      opacity: 0; transition: opacity .25s;
+      pointer-events: none; z-index: 9998;
+    }
+    #dev-toast.show { opacity: 1; }
+    #dev-toast.danger { background: rgba(192,57,43,.9); }
+
+    /* ── Layout ──────────────────────────────────── */
+    body { padding-top: 30px; }
+    #screen-combat {
+      height: calc(100vh - 30px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Stats overlay ───────────────────────────── */
+    #dev-stats {
+      position: fixed; right: 8px; top: 38px;
+      background: rgba(0,0,0,.75); color: #9eff9e;
+      font: 0.65rem monospace; padding: 6px 10px;
+      border-radius: 4px; z-index: 9990;
+      line-height: 1.6;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Bandeau DEV -->
+<div id="dev-bar">
+  ⚔ COMBAT DEV MODE
+  <span class="dev-sep">|</span>
+  <label>Type :
+    <select id="dev-node-type">
+      <option value="combat">⚔ combat</option>
+      <option value="elite">💀 elite</option>
+      <option value="boss">👁 boss</option>
+    </select>
+  </label>
+  <span class="dev-sep">|</span>
+  <label>HP joueur :
+    <select id="dev-player-hp">
+      <option value="60">60 (normal)</option>
+      <option value="20">20 (low)</option>
+      <option value="5">5 (critical)</option>
+      <option value="120">120 (tank)</option>
+    </select>
+  </label>
+  <span class="dev-sep">|</span>
+  <button onclick="DevCombat.restart()">↺ Relancer</button>
+  <button onclick="DevCombat.skipToEnd('win')">✓ Victoire forcée</button>
+  <button onclick="DevCombat.skipToEnd('lose')">✗ Défaite forcée</button>
+  <button onclick="DevCombat.dumpState()">⬇ Dump</button>
+</div>
+
+<!-- Toast -->
+<div id="dev-toast"></div>
+
+<!-- Stats overlay -->
+<div id="dev-stats">—</div>
+
+<!-- Conteneur principal -->
+<div id="app" role="main">
+  <div id="screen-combat" class="screen"></div>
+  <div id="screen-result"  class="screen" style="display:none"></div>
+  <div id="screen-map"     class="screen" style="display:none"></div>
+  <div id="screen-menu"    class="screen" style="display:none"></div>
+</div>
+
+<!-- ── Core ──────────────────────────────────────────────────────────────── -->
+<script src="../core/hex.js"></script>
+<script src="../core/tags.js"></script>
+<script src="../core/i18n.js"></script>
+<script src="../core/save.js"></script>
+<script src="../core/engine.js"></script>
+<script src="../core/combat.js"></script>
+
+<!-- ── UI components ─────────────────────────────────────────────────────── -->
+<script src="../ui/components/card-renderer.js"></script>
+<script src="../ui/components/hex-grid.js"></script>
+<script src="../ui/components/timeline.js"></script>
+<script src="../ui/components/qte-overlay.js"></script>
+
+<!-- ── Écran combat ──────────────────────────────────────────────────────── -->
+<script src="../ui/screens/combat-screen.js"></script>
+
+<!-- ── Stubs des écrans appelés par CombatScreen ────────────────────────── -->
+<script>
+(function () {
+
+  // MockResultScreen : affiche un toast et relance un combat au lieu de changer d'écran
+  class MockResultScreen {
+    constructor(params) { this._p = params || {}; }
+    init() {
+      const type = this._p.type || 'victory';
+      if (type === 'victory') {
+        DevCombat._toast(`🏆 Victoire ! Or +${this._p.gold || 0}  XP +${this._p.exp || 0} — relance dans 1,5s`);
+      } else {
+        DevCombat._toast('💀 Défaite — relance dans 1,5s', true);
+      }
+      setTimeout(() => DevCombat.restart(), 1500);
+    }
+    destroy() {}
+  }
+
+  // MockMapScreen : ne fait rien (le combat dev ne navigue pas vers la carte)
+  class MockMapScreen {
+    init() { DevCombat._toast('↩ Retour carte simulé — relance combat dans 1s'); setTimeout(() => DevCombat.restart(), 1000); }
+    destroy() {}
+  }
+
+  class MockMenuScreen {
+    init() { DevCombat._toast('↩ Retour menu simulé — relance combat dans 1s'); setTimeout(() => DevCombat.restart(), 1000); }
+    destroy() {}
+  }
+
+  window.ResultScreen = MockResultScreen;
+  window.MapScreen    = MockMapScreen;
+  window.MenuScreen   = MockMenuScreen;
+
+})();
+</script>
+
+<!-- ── DevCombat utilities ────────────────────────────────────────────────── -->
+<script>
+const DevCombat = {
+
+  _toast(msg, danger = false) {
+    const el = document.getElementById('dev-toast');
+    el.textContent = msg;
+    el.className   = 'show' + (danger ? ' danger' : '');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => { el.className = ''; }, 2200);
+  },
+
+  // ── Initialise Engine.showScreen minimal ──────────────────────────────────
+  _patchEngine() {
+    const screenMap = {
+      combat: 'CombatScreen',
+      result: 'ResultScreen',
+      map:    'MapScreen',
+      menu:   'MenuScreen',
+    };
+
+    Engine._currentScreen = null;
+    Engine.showScreen = function (name, params) {
+      if (this._currentScreen?.destroy) this._currentScreen.destroy();
+      document.querySelectorAll('.screen').forEach(el => {
+        el.style.display = 'none';
+        el.classList.remove('active');
+      });
+      const el = document.getElementById(`screen-${name}`);
+      if (el) { el.style.display = ''; el.classList.add('active'); }
+
+      const cls = screenMap[name] || (name[0].toUpperCase() + name.slice(1) + 'Screen');
+      const Cls = window[cls];
+      if (!Cls) { console.warn(`[DEV] Classe ${cls} introuvable`); return; }
+      const instance = new Cls(params || {});
+      this._currentScreen = instance;
+      if (instance.init) instance.init();
+      Engine.bus.emit('screen:change', { name, params });
+    };
+  },
+
+  // ── Crée ou récupère le personnage de dev ─────────────────────────────────
+  _ensureDevChar() {
+    const existing = Object.values(Save.state.characters || {})
+      .find(c => c.name === '__dev_combat__');
+    if (existing) return existing.id;
+    const stats = { force: 5, dexterite: 5, intelligence: 5, endurance: 5, volonte: 5, rapidite: 5 };
+    return Save.createCharacter('__dev_combat__', 'guerrier', stats).id;
+  },
+
+  // ── Lance ou relance un combat ────────────────────────────────────────────
+  restart() {
+    const nodeType = document.getElementById('dev-node-type').value;
+    const hp       = parseInt(document.getElementById('dev-player-hp').value, 10);
+
+    const charId = this._ensureDevChar();
+
+    // startRun avec un deck minimal pour les tests
+    const devDeck = ['frappe_basique', 'frappe_basique', 'frappe_basique',
+                     'blocage', 'blocage', 'esquive'];
+    Save.startRun(charId, devDeck);
+
+    // Patch les stats du run avec les valeurs du bandeau
+    const run  = Save.getCurrentRun();
+    run.hp     = hp;
+    run.mana   = 4;
+    run.endurance = 5;
+    Save.saveRunState(run);
+
+    Engine.showScreen('combat', { nodeType });
+    this._startStatsLoop();
+    this._toast(`⚔ Combat (${nodeType}) — HP=${hp}`);
+  },
+
+  // ── Force la fin du combat ────────────────────────────────────────────────
+  skipToEnd(result) {
+    const cs = Engine._currentScreen;
+    if (!cs || !cs._state) {
+      this._toast('Aucun combat actif', true);
+      return;
+    }
+    if (result === 'win') {
+      // Tuer tous les ennemis
+      for (const e of cs._state.enemies) e.hp = 0;
+      Engine.bus.emit('combat:ended', { result: 'player_win' });
+    } else {
+      cs._state.player.hp = 0;
+      Engine.bus.emit('combat:ended', { result: 'player_defeat' });
+    }
+  },
+
+  // ── Dump de l'état dans la console ───────────────────────────────────────
+  dumpState() {
+    const cs = Engine._currentScreen;
+    if (!cs || !cs._state) { this._toast('Aucun état de combat', true); return; }
+    const s = cs._state;
+    console.group('[DEV] CombatState');
+    console.log('Tour courant :', s.currentUnit);
+    console.log('Player', { hp: s.player.hp, mana: s.player.mana, endurance: s.player.endurance, hand: s.player.hand.length });
+    s.enemies.forEach(e => console.log('Enemy', e.id, { hp: e.hp, maxHp: e.maxHp }));
+    console.log('Timeline :', s.timeline?.map(t => t.unitId));
+    console.groupEnd();
+    this._toast('⬇ État loggé dans la console');
+  },
+
+  // ── Overlay de stats en temps réel ───────────────────────────────────────
+  _statsInterval: null,
+  _startStatsLoop() {
+    clearInterval(this._statsInterval);
+    const el = document.getElementById('dev-stats');
+    this._statsInterval = setInterval(() => {
+      const cs = Engine._currentScreen;
+      if (!cs || !cs._state) { el.textContent = '—'; return; }
+      const s = cs._state;
+      const p = s.player;
+      const eInfo = s.enemies.map(e => `  ${e.id}: ${e.hp}/${e.maxHp} HP`).join('\n');
+      el.textContent =
+        `JOUEUR\n  HP: ${p.hp}/${p.maxHp}\n  Mana: ${p.mana}/${p.maxMana}` +
+        `\n  Endurance: ${p.endurance}/${p.maxEndurance}` +
+        `\n  Main: ${p.hand.length}  Deck: ${p.deck.length}  Défausse: ${p.discard.length}` +
+        `\nTour: ${s.currentUnit}\nENNEMIS\n${eInfo}`;
+    }, 300);
+  },
+};
+</script>
+
+<!-- ── Bootstrap ─────────────────────────────────────────────────────────── -->
+<script>
+(async function boot() {
+  await I18n.init('fr');
+  try { await I18n.loadModuleStrings('../modules/base', 'fr'); } catch(e) { /* optionnel */ }
+
+  Save.load();
+  Engine.state = Save.state;
+
+  DevCombat._patchEngine();
+
+  // Tenter de charger les données du module (ennemis, cartes) si disponible
+  try {
+    const resp = await fetch('../modules/base/manifest.json');
+    if (resp.ok) {
+      const manifest = await resp.json();
+      await Engine._loadResources('../modules/base', 'enemies', manifest.enemies || [], {});
+      await Engine._loadResources('../modules/base', 'cards',   manifest.cards   || [], {});
+    }
+  } catch(e) {
+    console.info('[DEV] Module base non trouvé — ennemis/cartes par défaut utilisés');
+  }
+
+  DevCombat.restart();
+})();
+</script>
+
+</body>
+</html>

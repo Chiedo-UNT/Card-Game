@@ -1,0 +1,73 @@
+{
+  "tree": "rapidite",
+  "talents": [
+    {
+      "id": "initiative_accrue",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 2],
+      "prerequisites": [],
+      "position": { "col": 0, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "stat_bonus", "stat": "initiative", "value": 1 },
+        { "level": 2, "type": "stat_bonus", "stat": "initiative", "value": 2 },
+        { "level": 3, "type": "stat_bonus", "stat": "initiative", "value": 3 }
+      ]
+    },
+    {
+      "id": "deplacement_rapide",
+      "maxLevel": 3,
+      "costPerLevel": [1, 1, 1],
+      "prerequisites": [],
+      "position": { "col": 1, "row": 0 },
+      "effects": [
+        { "level": 1, "type": "movement_speed_bonus", "value": 1 },
+        { "level": 2, "type": "movement_speed_bonus", "value": 2 },
+        { "level": 3, "type": "movement_speed_bonus", "value": 3 }
+      ]
+    },
+    {
+      "id": "frappe_surprise",
+      "maxLevel": 1,
+      "costPerLevel": [2],
+      "prerequisites": ["initiative_accrue"],
+      "position": { "col": 0, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "unlock_card", "card": "frappe_surprise", "timing": "pre_combat" }
+      ]
+    },
+    {
+      "id": "reflexes_affutes",
+      "maxLevel": 3,
+      "costPerLevel": [1, 2, 2],
+      "prerequisites": ["deplacement_rapide"],
+      "position": { "col": 1, "row": 1 },
+      "effects": [
+        { "level": 1, "type": "qte_window_bonus", "value": 0.10 },
+        { "level": 2, "type": "qte_window_bonus", "value": 0.20 },
+        { "level": 3, "type": "qte_window_bonus", "value": 0.35 }
+      ]
+    },
+    {
+      "id": "sprint",
+      "maxLevel": 1,
+      "costPerLevel": [2],
+      "prerequisites": ["frappe_surprise"],
+      "position": { "col": 0, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "unlock_card", "card": "sprint" }
+      ]
+    },
+    {
+      "id": "vent_de_combat",
+      "maxLevel": 3,
+      "costPerLevel": [2, 2, 3],
+      "prerequisites": ["reflexes_affutes"],
+      "position": { "col": 1, "row": 2 },
+      "effects": [
+        { "level": 1, "type": "combat_movement_cost_reduction", "value": 1 },
+        { "level": 2, "type": "combat_movement_cost_reduction", "value": 2 },
+        { "level": 3, "type": "combat_movement_free", "value": true }
+      ]
+    }
+  ]
+}

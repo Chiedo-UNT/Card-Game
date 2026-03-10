@@ -1,0 +1,66 @@
+{
+  "id": "epee_de_base",
+  "rarity": "Commune",
+  "subtype": "epee",
+  "tags": ["Tranchant", "Estoc", "CaC", "Épée"],
+  "portee": { "min": 1, "max": 1 },
+  "stats": { "damage_bonus": 1 },
+  "typeCards": ["slash", "thrust"],
+  "subtypeCards": ["parade", "riposte"],
+  "specificCards": [],
+  "cardDefinitions": [
+    {
+      "id": "slash",
+      "rarity": "Commune",
+      "tags": ["Attaque", "Tranchant", "CaC", "Commune"],
+      "requires": [],
+      "portee": { "min": 1, "max": 1 },
+      "forme": "single",
+      "cost": { "initiative": 1 },
+      "effects": [
+        { "type": "damage", "value": 3, "scaling": { "stat": "force", "ratio": 0.5 } }
+      ],
+      "forgeable": false
+    },
+    {
+      "id": "thrust",
+      "rarity": "Commune",
+      "tags": ["Attaque", "Estoc", "CaC", "Commune"],
+      "requires": [],
+      "portee": { "min": 1, "max": 1 },
+      "forme": "single",
+      "cost": { "initiative": 1 },
+      "effects": [
+        { "type": "damage", "value": 2, "scaling": { "stat": "dexterite", "ratio": 0.6 }, "armorPenetration": 1 }
+      ],
+      "forgeable": false
+    },
+    {
+      "id": "parade",
+      "rarity": "Commune",
+      "tags": ["Défense", "CaC", "Épée", "Commune"],
+      "requires": [],
+      "portee": { "min": 0, "max": 0 },
+      "forme": "self",
+      "cost": { "initiative": 1 },
+      "effects": [
+        { "type": "buff", "stat": "shield", "value": 4, "duration": 1, "condition": "next_hit" }
+      ],
+      "forgeable": false
+    },
+    {
+      "id": "riposte",
+      "rarity": "Commune",
+      "tags": ["Attaque", "Défense", "CaC", "Épée", "Commune"],
+      "requires": [],
+      "portee": { "min": 1, "max": 1 },
+      "forme": "single",
+      "cost": { "initiative": 0 },
+      "trigger": "after_successful_parade",
+      "effects": [
+        { "type": "damage", "value": 4, "scaling": { "stat": "force", "ratio": 0.4 } }
+      ],
+      "forgeable": false
+    }
+  ]
+}
