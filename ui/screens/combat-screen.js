@@ -427,17 +427,24 @@ class CombatScreen {
       startX = clientX;
       startY = clientY;
 
-      // Create a floating ghost clone
-      ghost = el.cloneNode(true);
+      // Create a small round cursor icon (like entity tokens)
+      ghost = document.createElement('div');
+      const icon = this._cardDragIcon(cardDef);
+      const color = this._cardDragColor(cardDef);
+      ghost.textContent = icon;
       ghost.style.cssText = `
         position: fixed;
-        left: ${clientX - 40}px;
-        top: ${clientY - 60}px;
-        width: 80px;
+        left: ${clientX - 18}px;
+        top: ${clientY - 18}px;
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        border: 3px solid ${color};
+        background: var(--color-panel, #1a1a2e);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem;
         z-index: 9999;
         pointer-events: none;
-        opacity: 0.85;
-        transform: scale(1.1);
+        box-shadow: 0 0 8px ${color};
         transition: none;
       `;
       document.body.appendChild(ghost);
@@ -449,8 +456,8 @@ class CombatScreen {
 
     const onMove = (clientX, clientY) => {
       if (!dragging || !ghost) return;
-      ghost.style.left = `${clientX - 40}px`;
-      ghost.style.top  = `${clientY - 60}px`;
+      ghost.style.left = `${clientX - 18}px`;
+      ghost.style.top  = `${clientY - 18}px`;
 
       // Update targeting highlight based on card forme
       this._updateCardTargeting(clientX, clientY, cardDef);
@@ -840,6 +847,26 @@ class CombatScreen {
     }
 
     return false;
+  }
+
+  _cardDragIcon(cardDef) {
+    const tags = cardDef.tags || [];
+    if (tags.includes('Attaque'))  return '\u2694'; // ⚔
+    if (tags.includes('Défense') || tags.includes('Defense')) return '\uD83D\uDEE1'; // 🛡
+    if (tags.includes('Soin'))     return '\u2764'; // ❤
+    if (tags.includes('Magie'))    return '\u2728'; // ✨
+    if (tags.includes('Skill'))    return '\u26A1'; // ⚡
+    return '\u25C6'; // ◆
+  }
+
+  _cardDragColor(cardDef) {
+    const tags = cardDef.tags || [];
+    if (tags.includes('Attaque'))  return '#e74c3c';
+    if (tags.includes('Défense') || tags.includes('Defense')) return '#3498db';
+    if (tags.includes('Soin'))     return '#2ecc71';
+    if (tags.includes('Magie'))    return '#9b59b6';
+    if (tags.includes('Skill'))    return '#f39c12';
+    return '#95a5a6';
   }
 
   _getLineHexes(from, to) {
