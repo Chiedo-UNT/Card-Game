@@ -288,6 +288,7 @@ const DevCombat = {
       el.textContent =
         `JOUEUR\n  HP: ${p.hp}/${p.maxHp}\n  Mana: ${p.mana}/${p.maxMana}` +
         `\n  Endurance: ${p.endurance}/${p.maxEndurance}` +
+        `\n  Initiative: ${p.initiative}/${p.baseInitiative}` +
         `\n  Main: ${p.hand.length}  Deck: ${p.deck.length}  Défausse: ${p.discard.length}` +
         `\nTour: ${s.currentUnit}\nENNEMIS\n${eInfo}`;
     }, 300);

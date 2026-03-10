@@ -346,7 +346,7 @@ class CombatScreen {
     const panel = document.getElementById('panel-player');
     if (!panel || !this._state) return;
     const p = this._state.player;
-    panel.innerHTML = this._buildCombatantPanel(p.name || 'Joueur', p.hp, p.maxHp, p.mana, p.maxMana, p.endurance, p.maxEndurance);
+    panel.innerHTML = this._buildCombatantPanel(p.name || 'Joueur', p.hp, p.maxHp, p.mana, p.maxMana, p.endurance, p.maxEndurance, p.initiative, p.baseInitiative);
   }
 
   _renderEnemyPanel() {
@@ -362,10 +362,11 @@ class CombatScreen {
     }
   }
 
-  _buildCombatantPanel(name, hp, maxHp, mana, maxMana, end, maxEnd) {
+  _buildCombatantPanel(name, hp, maxHp, mana, maxMana, end, maxEnd, init, maxInit) {
     const hpPct  = maxHp  ? Math.max(0, hp  / maxHp  * 100) : 0;
     const manaPct = maxMana ? Math.max(0, mana / maxMana * 100) : 0;
     const endPct  = maxEnd  ? Math.max(0, end  / maxEnd  * 100) : 0;
+    const initPct = maxInit ? Math.max(0, init / maxInit * 100) : 0;
     const t = k => I18n.t(k) || k;
 
     return `
@@ -389,6 +390,12 @@ class CombatScreen {
             <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill--endurance" style="width:${endPct}%"></div></div>
             <span class="stat-bar-value">${end}/${maxEnd}</span>
           </div>` : ''}
+          ${init != null ? `
+          <div class="stat-bar-row">
+            <span class="stat-bar-label" title="${t('ui.combat.initiative')}">⏱</span>
+            <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill--initiative" style="width:${initPct}%"></div></div>
+            <span class="stat-bar-value">${init}/${maxInit}</span>
+          </div>` : ''}
         </div>
       </div>
     `;
@@ -398,7 +405,7 @@ class CombatScreen {
     if (!this._state) return;
     const p = this._state.player;
     const panelP = document.getElementById('panel-player');
-    if (panelP) panelP.innerHTML = this._buildCombatantPanel(p.name || 'Joueur', p.hp, p.maxHp, p.mana, p.maxMana, p.endurance, p.maxEndurance);
+    if (panelP) panelP.innerHTML = this._buildCombatantPanel(p.name || 'Joueur', p.hp, p.maxHp, p.mana, p.maxMana, p.endurance, p.maxEndurance, p.initiative, p.baseInitiative);
 
     for (const e of this._state.enemies) {
       const sub = document.querySelector(`[data-unit-id="${e.id}"]`);

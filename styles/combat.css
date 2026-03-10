@@ -93,7 +93,8 @@
 
 .stat-bar-fill--life      { background: var(--color-life); }
 .stat-bar-fill--mana      { background: var(--color-mana); }
-.stat-bar-fill--endurance { background: var(--color-endurance); }
+.stat-bar-fill--endurance  { background: var(--color-endurance); }
+.stat-bar-fill--initiative { background: var(--color-initiative); }
 
 .stat-bar-value {
   font-size: var(--text-xs);
