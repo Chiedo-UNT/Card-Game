@@ -1,271 +1,161 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Arena</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="Dark fantasy card game with hex combat and roguelite progression." />
+  <meta name="theme-color" content="#0a0a14" />
+  <title>Card Game</title>
+
+  <!-- ── Styles ─────────────────────────────────────────── -->
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="styles/cards.css" />
+  <link rel="stylesheet" href="styles/combat.css" />
+  <link rel="stylesheet" href="styles/map.css" />
+  <link rel="stylesheet" href="styles/screens.css" />
+  <link rel="stylesheet" href="ui/ui.css" />
 </head>
 <body>
-    <div id="app">
-        <!-- Menu principal -->
-        <div id="screen-menu" class="screen active">
-            <div class="menu-container">
-                <h1 class="game-title">Card Arena</h1>
-                <button class="btn btn-primary" onclick="game.showScreen('arena-select')">Arène</button>
-                <button class="btn btn-secondary" onclick="game.showScreen('collection')">Collection</button>
-                <button class="btn btn-secondary" onclick="game.showScreen('card-creator')">Créer une Carte</button>
-            </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       Loading Overlay
+  ══════════════════════════════════════════════════════════ -->
+  <div id="loading-overlay" class="loading-overlay" aria-live="polite" role="status">
+    <div class="loading-content">
+      <div class="loading-logo">
+        <span class="loading-logo-text">Card Game</span>
+        <div class="loading-logo-underline"></div>
+      </div>
+      <div class="loading-spinner" aria-hidden="true">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring spinner-ring--delay1"></div>
+        <div class="spinner-ring spinner-ring--delay2"></div>
+      </div>
+      <div class="loading-bar-track">
+        <div id="loading-bar"
+             class="loading-bar"
+             role="progressbar"
+             aria-valuenow="0"
+             aria-valuemin="0"
+             aria-valuemax="100">
         </div>
+      </div>
+      <p id="loading-status" class="loading-status">Initialisation…</p>
+    </div>
+  </div>
 
-        <!-- Sélection arène -->
-        <div id="screen-arena-select" class="screen">
-            <div class="arena-select-container">
-                <h2>Préparer le combat</h2>
-                <div class="select-sections">
-                    <div class="select-section">
-                        <h3>Choisis ton Héros</h3>
-                        <div id="hero-select" class="hero-grid"></div>
-                    </div>
-                    <div class="select-section">
-                        <h3>Ton Deck</h3>
-                        <div class="arena-deck-picker">
-                            <select id="arena-deck-select" class="deck-select"></select>
-                        </div>
-                        <div id="deck-preview" class="deck-preview"></div>
-                    </div>
-                    <div class="select-section">
-                        <h3>Choisis ton Ennemi</h3>
-                        <div id="enemy-select" class="enemy-grid"></div>
-                    </div>
-                </div>
-                <div class="arena-actions">
-                    <button class="btn btn-back" onclick="game.showScreen('menu')">Retour</button>
-                    <button class="btn btn-primary btn-fight" id="btn-fight" onclick="game.startBattle()">Combat !</button>
-                </div>
-            </div>
-        </div>
+  <!-- ═══════════════════════════════════════════════════════
+       Application Root
+  ══════════════════════════════════════════════════════════ -->
+  <div id="app" role="main">
 
-        <!-- Écran de combat -->
-        <div id="screen-battle" class="screen">
-            <div class="battle-container">
-                <!-- Scène de combat : fond + personnages -->
-                <div class="battlefield">
-                    <div class="battlefield-bg" id="battlefield-bg">
-                        <!-- Placeholder fond de terrain -->
-                    </div>
-
-                    <!-- Héros (gauche) -->
-                    <div class="bf-character bf-hero" id="bf-hero">
-                        <div class="bf-char-sprite" id="hero-sprite">
-                            <div class="bf-char-placeholder"></div>
-                            <div class="bf-char-emoji" id="hero-emoji"></div>
-                        </div>
-                        <div class="bf-char-info">
-                            <div class="bf-char-name" id="hero-name-label"></div>
-                            <div class="bf-hp-bar">
-                                <div class="bf-hp-fill" id="hero-hp-fill"></div>
-                            </div>
-                            <div class="bf-hp-text" id="hero-hp-text"></div>
-                            <div class="bf-block" id="hero-block"></div>
-                            <div class="bf-statuses" id="hero-statuses"></div>
-                        </div>
-                    </div>
-
-                    <!-- Ennemi(s) (droite) -->
-                    <div class="bf-character bf-enemy" id="bf-enemy">
-                        <div class="bf-enemy-intent" id="enemy-intent"></div>
-                        <div class="bf-char-sprite" id="enemy-sprite">
-                            <div class="bf-char-placeholder"></div>
-                            <div class="bf-char-emoji" id="enemy-emoji"></div>
-                        </div>
-                        <div class="bf-char-info">
-                            <div class="bf-char-name" id="enemy-name-label"></div>
-                            <div class="bf-hp-bar">
-                                <div class="bf-hp-fill" id="enemy-hp-fill"></div>
-                            </div>
-                            <div class="bf-hp-text" id="enemy-hp-text"></div>
-                            <div class="bf-block" id="enemy-block"></div>
-                            <div class="bf-statuses" id="enemy-statuses"></div>
-                        </div>
-                    </div>
-
-                    <!-- Log au centre de la scène -->
-                    <div class="bf-log" id="battle-log"></div>
-                </div>
-
-                <!-- Zone joueur (main + actions) -->
-                <div class="player-zone">
-                    <div class="player-bar">
-                        <div class="energy-display" id="energy-display"></div>
-                        <div class="pile-info" id="pile-info"></div>
-                        <button class="btn btn-end-turn" id="btn-end-turn" onclick="game.endTurn()">Fin du Tour</button>
-                    </div>
-                    <div id="hand" class="hand"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Collection / Deck Builder -->
-        <div id="screen-collection" class="screen">
-            <div class="collection-container">
-                <h2>Deck Builder</h2>
-                <div class="deckbuilder-top">
-                    <div class="collection-filters">
-                        <button class="btn btn-filter active" data-hero="all">Toutes</button>
-                    </div>
-                    <div class="deck-picker">
-                        <label>Deck :</label>
-                        <select id="deck-select" class="deck-select"></select>
-                        <button class="btn-icon btn-new-deck" id="btn-new-deck" title="Nouveau deck">+</button>
-                        <button class="btn-icon btn-delete-deck" id="btn-delete-deck" title="Supprimer ce deck">&times;</button>
-                    </div>
-                </div>
-                <div class="deckbuilder-layout">
-                    <div class="deckbuilder-cards">
-                        <h3>Collection</h3>
-                        <div id="collection-grid" class="collection-grid"></div>
-                    </div>
-                    <div class="deckbuilder-deck">
-                        <div class="deck-header">
-                            <h3>Deck <span id="deck-count">(0)</span></h3>
-                            <button class="btn btn-filter btn-reset-deck" id="btn-reset-deck">Reset</button>
-                        </div>
-                        <div id="deck-builder-list" class="deck-builder-list"></div>
-                    </div>
-                </div>
-                <button class="btn btn-back" onclick="game.showScreen('menu')">Retour</button>
-            </div>
-        </div>
-
-        <!-- Modale création de deck -->
-        <div id="modal-new-deck" class="modal-overlay" style="display:none">
-            <div class="modal-box">
-                <h3>Nouveau Deck</h3>
-                <div class="modal-field">
-                    <label>Nom du deck</label>
-                    <input type="text" id="new-deck-name" class="modal-input" placeholder="Mon super deck" maxlength="30">
-                </div>
-                <div class="modal-field">
-                    <label>Héros</label>
-                    <select id="new-deck-hero" class="modal-input"></select>
-                </div>
-                <div class="modal-actions">
-                    <button class="btn btn-back" id="btn-cancel-deck">Annuler</button>
-                    <button class="btn btn-primary" id="btn-confirm-deck">Créer</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Créateur de carte -->
-        <div id="screen-card-creator" class="screen">
-            <div class="creator-container">
-                <h2>Créateur de Carte</h2>
-                <div class="creator-layout">
-                    <!-- Formulaire gauche -->
-                    <div class="creator-form">
-                        <div class="creator-row">
-                            <div class="creator-field">
-                                <label>Nom</label>
-                                <input type="text" id="cc-name" class="modal-input" placeholder="Ma carte" maxlength="30">
-                            </div>
-                            <div class="creator-field creator-field-small">
-                                <label>Coût</label>
-                                <select id="cc-cost" class="modal-input">
-                                    <option value="0">0</option>
-                                    <option value="1" selected>1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="creator-row">
-                            <div class="creator-field">
-                                <label>Type</label>
-                                <select id="cc-type" class="modal-input">
-                                    <option value="attack">Attaque</option>
-                                    <option value="skill">Compétence</option>
-                                    <option value="power">Pouvoir</option>
-                                </select>
-                            </div>
-                            <div class="creator-field">
-                                <label>Héros</label>
-                                <select id="cc-hero" class="modal-input">
-                                    <option value="warrior">Guerrier</option>
-                                    <option value="mage">Mage</option>
-                                    <option value="rogue">Voleur</option>
-                                    <option value="neutral">Neutre</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="creator-row">
-                            <div class="creator-field creator-field-small">
-                                <label>Emoji</label>
-                                <input type="text" id="cc-art" class="modal-input" placeholder="⚔️" maxlength="4">
-                            </div>
-                            <div class="creator-field">
-                                <label>Description</label>
-                                <input type="text" id="cc-desc" class="modal-input" placeholder="Inflige {damage} dégâts.">
-                            </div>
-                        </div>
-                        <div class="creator-field">
-                            <label>Mots-clés</label>
-                            <div class="creator-keywords" id="cc-keywords">
-                                <label class="keyword-check"><input type="checkbox" value="exhaust"> Exhaust</label>
-                                <label class="keyword-check"><input type="checkbox" value="ethereal"> Ethereal</label>
-                                <label class="keyword-check"><input type="checkbox" value="retain"> Retain</label>
-                                <label class="keyword-check"><input type="checkbox" value="innate"> Innate</label>
-                            </div>
-                        </div>
-
-                        <!-- Effets -->
-                        <div class="creator-field">
-                            <label>Effets <button class="btn-add-effect" id="cc-add-effect">+ Ajouter</button></label>
-                            <div id="cc-effects-list" class="creator-effects-list"></div>
-                        </div>
-                    </div>
-
-                    <!-- Preview droite -->
-                    <div class="creator-preview-area">
-                        <h3>Aperçu</h3>
-                        <div id="cc-preview" class="creator-preview"></div>
-                        <button class="btn btn-primary" id="cc-save">Sauvegarder</button>
-
-                        <!-- Liste des cartes custom -->
-                        <div class="creator-custom-list">
-                            <h3>Cartes créées <span id="cc-custom-count">(0)</span></h3>
-                            <div id="cc-custom-cards" class="custom-cards-list"></div>
-                        </div>
-                    </div>
-                </div>
-                <button class="btn btn-back" onclick="game.showScreen('menu')">Retour</button>
-            </div>
-        </div>
-
-        <!-- Écran de victoire/défaite -->
-        <div id="screen-result" class="screen">
-            <div class="result-container">
-                <h2 id="result-title"></h2>
-                <div id="result-stats"></div>
-                <button class="btn btn-primary" onclick="game.showScreen('menu')">Menu Principal</button>
-            </div>
-        </div>
+    <!-- ── SCREEN: Main Menu ──────────────────────────── -->
+    <div class="screen" id="screen-menu"
+         role="region" aria-label="Menu principal">
     </div>
 
-    <script src="js/data/cards.js"></script>
-    <script src="js/data/heroes.js"></script>
-    <script src="js/data/enemies.js"></script>
-    <script src="js/data/relics.js"></script>
-    <script src="js/engine/effects.js"></script>
-    <script src="js/engine/battle.js"></script>
-    <script src="js/engine/enemy-ai.js"></script>
-    <script src="js/ui/card-renderer.js"></script>
-    <script src="js/ui/battle-ui.js"></script>
-    <script src="js/ui/arena-select-ui.js"></script>
-    <script src="js/ui/collection-ui.js"></script>
-    <script src="js/ui/card-creator-ui.js"></script>
-    <script src="js/game.js"></script>
+    <!-- ── SCREEN: Character Creation ────────────────── -->
+    <div class="screen" id="screen-character-creation"
+         role="region" aria-label="Création de personnage">
+    </div>
+
+    <!-- ── SCREEN: Character Select ──────────────────── -->
+    <div class="screen" id="screen-character-select"
+         role="region" aria-label="Sélection de personnage">
+    </div>
+
+    <!-- ── SCREEN: World Map ──────────────────────────── -->
+    <div class="screen" id="screen-map"
+         role="region" aria-label="Carte du monde">
+    </div>
+
+    <!-- ── SCREEN: Combat ─────────────────────────────── -->
+    <div class="screen" id="screen-combat"
+         role="region" aria-label="Combat">
+    </div>
+
+    <!-- ── SCREEN: Forge ──────────────────────────────── -->
+    <div class="screen" id="screen-forge"
+         role="region" aria-label="Forge de cartes">
+    </div>
+
+    <!-- ── SCREEN: Talent Tree ────────────────────────── -->
+    <div class="screen" id="screen-talent"
+         role="region" aria-label="Arbre de talents">
+    </div>
+
+    <!-- ── SCREEN: Merchant ───────────────────────────── -->
+    <div class="screen" id="screen-merchant"
+         role="region" aria-label="Marchand">
+    </div>
+
+    <!-- ── SCREEN: Collection ─────────────────────────── -->
+    <div class="screen" id="screen-collection"
+         role="region" aria-label="Collection de cartes">
+    </div>
+
+    <!-- ── SCREEN: Result ─────────────────────────────── -->
+    <div class="screen" id="screen-result"
+         role="region" aria-label="Résultat">
+    </div>
+
+  </div><!-- /#app -->
+
+  <!-- ── Global Tooltip portal ──────────────────────────── -->
+  <div id="tooltip-portal" class="tooltip-portal" aria-hidden="true"></div>
+
+  <!-- ── Global Modal portal ────────────────────────────── -->
+  <div id="modal-portal"
+       class="modal-portal"
+       role="dialog"
+       aria-modal="true"
+       aria-hidden="true">
+  </div>
+
+  <!-- ── Global Notifications ───────────────────────────── -->
+  <div id="notifications"
+       class="notifications-container"
+       aria-live="polite"
+       aria-atomic="false">
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       JavaScript — loaded in strict dependency order
+  ══════════════════════════════════════════════════════════ -->
+
+  <!-- 1. Core utilities -->
+  <script src="core/hex.js"></script>
+  <script src="core/tags.js"></script>
+  <script src="core/i18n.js"></script>
+  <script src="core/save.js"></script>
+
+  <!-- 2. Core systems -->
+  <script src="core/engine.js"></script>
+  <script src="core/qte.js"></script>
+  <script src="core/forge.js"></script>
+  <script src="core/map.js"></script>
+  <script src="core/combat.js"></script>
+
+  <!-- 3. UI Components -->
+  <script src="ui/components/card-renderer.js"></script>
+  <script src="ui/components/hex-grid.js"></script>
+  <script src="ui/components/timeline.js"></script>
+  <script src="ui/components/qte-overlay.js"></script>
+
+  <!-- 4. Screens -->
+  <script src="ui/screens/menu.js"></script>
+  <script src="ui/screens/character-creation.js"></script>
+  <script src="ui/screens/character-select.js"></script>
+  <script src="ui/screens/map-screen.js"></script>
+  <script src="ui/screens/combat-screen.js"></script>
+  <script src="ui/screens/forge-screen.js"></script>
+  <script src="ui/screens/talent-screen.js"></script>
+  <script src="ui/screens/merchant-screen.js"></script>
+  <script src="ui/screens/collection-screen.js"></script>
+  <script src="ui/screens/result-screen.js"></script>
+
+  <!-- 5. Entry point -->
+  <script src="main.js"></script>
+
 </body>
 </html>
