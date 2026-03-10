@@ -345,14 +345,14 @@ class HexGridRenderer {
 
     el.addEventListener('mouseenter', () => {
       this._hoveredKey = `${q},${r}`;
-      if (this._dragging) return; // don't override highlight during drag
+      if (this._dragging || el.dataset.cardTarget) return;
       el.style.background = 'rgba(255,255,255,0.10)';
       Engine.bus.emit('hexgrid:cell_hover', { q, r });
     });
 
     el.addEventListener('mouseleave', () => {
       this._hoveredKey = null;
-      if (this._dragging) return; // don't override highlight during drag
+      if (this._dragging || el.dataset.cardTarget) return;
       const state = el.dataset.state;
       el.style.background = this._stateBg(state);
     });
