@@ -478,8 +478,8 @@ class CombatScreen {
         }
       }
 
-      // Clean up targeting highlights
-      if (this._hexGrid) this._hexGrid.clearCardTargeting();
+      // Clean up targeting highlights (unless we just entered a placement mode)
+      if (this._hexGrid && !this._placementMode) this._hexGrid.clearCardTargeting();
       this._dragCardDef = null;
       this._dragCardInstance = null;
     };
