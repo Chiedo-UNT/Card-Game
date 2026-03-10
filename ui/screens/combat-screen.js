@@ -681,38 +681,36 @@ class CombatScreen {
    * Execute a zone AoE card — apply effects to all units in the zone.
    */
   _executeCardZone(cardInstance, cardDef, zoneHexes, cardEl) {
-    // First apply the card cost once (use player pos as anchor)
     const zoneKeys = new Set(zoneHexes.map(h => `${h.q},${h.r}`));
-    const targets = [];
+    const center = zoneHexes[0] || { q: 0, r: 0 };
 
-    // Find all units in the zone
-    if (zoneKeys.has(`${this._state.player.pos.q},${this._state.player.pos.r}`)) {
-      targets.push(this._state.player.pos);
-    }
+    // Find all units in the zone (excluding the first target which applyCard handles)
+    const extraTargets = [];
     for (const e of this._state.enemies) {
       if (e.hp <= 0) continue;
       if (zoneKeys.has(`${e.pos.q},${e.pos.r}`)) {
-        targets.push(e.pos);
+        extraTargets.push(e.pos);
       }
     }
+    if (zoneKeys.has(`${this._state.player.pos.q},${this._state.player.pos.r}`)) {
+      extraTargets.push(this._state.player.pos);
+    }
 
-    // Apply card to the first target to deduct cost, then apply effects to the rest
-    if (targets.length > 0) {
-      const result = this._state.applyCard(cardInstance.id, 'player', targets[0], cardInstance.instanceId);
-      if (result.success) {
-        // Apply effects to remaining targets
-        for (let i = 1; i < targets.length; i++) {
-          this._state._executeCardEffects(cardDef, 'player', targets[i]);
-        }
-        const center = zoneHexes[0] || targets[0];
-        const px = this._hexGrid._toPixel(center.q, center.r);
-        const rect = this._hexGrid.getContainerRect();
-        CardRenderer.animatePlay(cardEl,
-          { x: rect.left + px.x, y: rect.top + px.y }, () => {});
-        this._updateHPBars();
-        this._renderPlayerPanel();
-        this._updatePiles();
+    // Always play the card on the center — applyCard deducts cost and applies effects to center target
+    const firstTarget = extraTargets.length > 0 ? extraTargets.shift() : center;
+    const result = this._state.applyCard(cardInstance.id, 'player', firstTarget, cardInstance.instanceId);
+    if (result.success) {
+      // Apply effects to remaining units in the zone
+      for (const pos of extraTargets) {
+        this._state._executeCardEffects(cardDef, 'player', pos);
       }
+      const px = this._hexGrid._toPixel(center.q, center.r);
+      const rect = this._hexGrid.getContainerRect();
+      CardRenderer.animatePlay(cardEl,
+        { x: rect.left + px.x, y: rect.top + px.y }, () => {});
+      this._updateHPBars();
+      this._renderPlayerPanel();
+      this._updatePiles();
     }
   }
 
