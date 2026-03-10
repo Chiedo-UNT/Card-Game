@@ -25,6 +25,11 @@ class HexGridRenderer {
 
     this._hoveredKey = null;
     this._selectedKey = null;
+
+    // Drag state
+    this._dragging = false;
+    this._dragUnitId = null;
+    this._dragGhost = null;
   }
 
   // ─── Build ──────────────────────────────────────────────────────────────
@@ -108,6 +113,12 @@ class HexGridRenderer {
     `;
     token.textContent = opts.icon || (opts.isPlayer ? '⚔' : '☠');
 
+    if (opts.isPlayer) {
+      token.style.pointerEvents = 'auto';
+      token.style.cursor = 'grab';
+      this._initDrag(token, unitId);
+    }
+
     this._container.appendChild(token);
     this._tokens[unitId] = token;
     return token;
@@ -143,6 +154,142 @@ class HexGridRenderer {
       token.appendChild(badge);
     }
     badge.textContent = `${hp}/${maxHp}`;
+  }
+
+  // ─── Drag & Drop ──────────────────────────────────────────────────────
+
+  _initDrag(token, unitId) {
+    let startX, startY;
+
+    const onMouseDown = (e) => {
+      e.preventDefault();
+      this._dragging = true;
+      this._dragUnitId = unitId;
+      startX = e.clientX;
+      startY = e.clientY;
+      token.style.cursor = 'grabbing';
+      token.style.zIndex = '20';
+
+      Engine.bus.emit('hexgrid:drag_start', { unitId });
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
+
+    const onMouseMove = (e) => {
+      if (!this._dragging) return;
+      const rect = this._container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Move token visually to follow cursor
+      token.style.left = `${x - 20}px`;
+      token.style.top  = `${y - 20}px`;
+
+      // Determine hovered hex and emit
+      const hexPos = HexGrid.fromPixel(
+        x - this._padding - this._size,
+        y - this._padding - this._size * Math.sqrt(3) / 2,
+        this._size
+      );
+      Engine.bus.emit('hexgrid:drag_hover', { unitId, q: hexPos.q, r: hexPos.r });
+    };
+
+    const onMouseUp = (e) => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+
+      if (!this._dragging) return;
+      this._dragging = false;
+      token.style.cursor = 'grab';
+      token.style.zIndex = '5';
+
+      const rect = this._container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const hexPos = HexGrid.fromPixel(
+        x - this._padding - this._size,
+        y - this._padding - this._size * Math.sqrt(3) / 2,
+        this._size
+      );
+
+      Engine.bus.emit('hexgrid:drag_end', { unitId, q: hexPos.q, r: hexPos.r });
+    };
+
+    token.addEventListener('mousedown', onMouseDown);
+
+    // Touch support
+    token.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      onMouseDown({ preventDefault: () => e.preventDefault(), clientX: touch.clientX, clientY: touch.clientY });
+    }, { passive: false });
+
+    token.addEventListener('touchmove', (e) => {
+      const touch = e.touches[0];
+      onMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
+    }, { passive: true });
+
+    token.addEventListener('touchend', (e) => {
+      const touch = e.changedTouches[0];
+      onMouseUp({ clientX: touch.clientX, clientY: touch.clientY });
+    });
+  }
+
+  /**
+   * Highlight reachable hexes with a color gradient based on movement cost.
+   * @param {Map<string, number>} costMap  — "q,r" → cost (from CombatState.getReachableHexes)
+   * @param {number} maxCost — maximum initiative available
+   */
+  highlightReachable(costMap, maxCost) {
+    this.clearAllHighlights();
+    for (const [key, cost] of costMap) {
+      const el = this._cells[key];
+      if (!el) continue;
+      this._highlights.add(key);
+
+      // Gradient: low cost = bright green, high cost = dim/orange
+      const ratio = 1 - (cost - 1) / Math.max(maxCost - 1, 1); // 1.0 (close) → 0.0 (far)
+      const r = Math.round(46 + (230 - 46) * (1 - ratio));   // 46 → 230
+      const g = Math.round(204 - (204 - 126) * (1 - ratio));  // 204 → 126
+      const b = Math.round(113 - (113 - 34) * (1 - ratio));   // 113 → 34
+      const alpha = 0.15 + 0.25 * ratio; // 0.40 (close) → 0.15 (far)
+
+      el.dataset.state = 'move-reachable';
+      el.style.background = `rgba(${r},${g},${b},${alpha})`;
+    }
+  }
+
+  /**
+   * Highlight the path from player to a target hex.
+   * @param {Array<{q,r}>} path — hex coords along the path
+   */
+  highlightPath(path) {
+    // Reset all reachable to their base gradient (don't clear — just remove path markers)
+    for (const key of this._highlights) {
+      const el = this._cells[key];
+      if (el && el.dataset.pathHighlight) {
+        el.style.outline = '';
+        delete el.dataset.pathHighlight;
+      }
+    }
+    for (const { q, r } of path) {
+      const el = this._cells[`${q},${r}`];
+      if (el) {
+        el.style.outline = '2px solid rgba(255,255,255,0.6)';
+        el.dataset.pathHighlight = '1';
+      }
+    }
+  }
+
+  clearPath() {
+    for (const key of this._highlights) {
+      const el = this._cells[key];
+      if (el && el.dataset.pathHighlight) {
+        el.style.outline = '';
+        delete el.dataset.pathHighlight;
+      }
+    }
   }
 
   // ─── Private ────────────────────────────────────────────────────────────

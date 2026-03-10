@@ -376,6 +376,68 @@ class CombatState {
 
   // ─── Movement ─────────────────────────────────────────────────────────────
 
+  /**
+   * BFS: returns a Map of "q,r" → cost for all hexes the player can reach
+   * given their current initiative. Each step costs 1 initiative.
+   */
+  getReachableHexes() {
+    const p = this.player;
+    const maxCost = p.initiative;
+    if (maxCost <= 0) return new Map();
+
+    const startKey = HexGrid.key(p.pos.q, p.pos.r);
+    const costs = new Map();  // "q,r" → movement cost
+    costs.set(startKey, 0);
+
+    const queue = [{ q: p.pos.q, r: p.pos.r, cost: 0 }];
+
+    while (queue.length > 0) {
+      const cur = queue.shift();
+      const nextCost = cur.cost + 1;
+      if (nextCost > maxCost) continue;
+
+      for (const nb of HexGrid.neighbors(cur.q, cur.r)) {
+        const key = HexGrid.key(nb.q, nb.r);
+        if (costs.has(key)) continue;
+        if (!HexGrid.inBounds(nb.q, nb.r, this.grid.width, this.grid.height)) continue;
+
+        const terrain = this.grid.terrain[key];
+        if (terrain === 'wall' || terrain === 'void') continue;
+
+        if (this.grid.occupied[key]) continue;
+
+        costs.set(key, nextCost);
+        queue.push({ q: nb.q, r: nb.r, cost: nextCost });
+      }
+    }
+
+    // Remove starting position — player is already there
+    costs.delete(startKey);
+    return costs;
+  }
+
+  /**
+   * Move the player to targetPos, deducting the BFS-computed initiative cost.
+   * Returns { success, cost } or { success: false, reason }.
+   */
+  movePlayer(targetPos) {
+    if (this.currentUnit !== 'player') return { success: false, reason: 'not_player_turn' };
+
+    const reachable = this.getReachableHexes();
+    const key = HexGrid.key(targetPos.q, targetPos.r);
+    if (!reachable.has(key)) return { success: false, reason: 'out_of_reach' };
+
+    const cost = reachable.get(key);
+    this.player.initiative -= cost;
+
+    const result = this.moveUnit('player', targetPos);
+    if (!result.success) {
+      this.player.initiative += cost; // rollback
+      return result;
+    }
+    return { success: true, cost };
+  }
+
   moveUnit(unitId, targetPos) {
     const unit = this._getUnit(unitId);
     if (!unit) return { success: false, reason: 'unit_not_found' };

@@ -182,6 +182,9 @@ class CombatScreen {
     on('combat:enemy_turn_start',  ({ unitId }) => this._onEnemyTurn(unitId));
     on('combat:ended',           ({ result })   => this._onCombatEnd(result));
     on('hexgrid:cell_click',     ({ q, r })     => this._onCellClick(q, r));
+    on('hexgrid:drag_start',    ({ unitId })   => this._onDragStart(unitId));
+    on('hexgrid:drag_hover',    ({ unitId, q, r }) => this._onDragHover(unitId, q, r));
+    on('hexgrid:drag_end',      ({ unitId, q, r }) => this._onDragEnd(unitId, q, r));
   }
 
   // ─── Turn Logic ───────────────────────────────────────────────────────────
@@ -219,11 +222,79 @@ class CombatScreen {
 
   _onCellClick(q, r) {
     if (!this._state || this._ended) return;
-    // For now: if a card is selected, try to play it targeting this cell
-    // (Simplified — full drag & drop implementation would go here)
     const occupied = this._state.grid.occupied[`${q},${r}`];
     if (occupied && occupied !== 'player') {
       Engine.bus.emit('combat:target_selected', { q, r, targetId: occupied });
+    }
+  }
+
+  // ─── Player Drag Movement ──────────────────────────────────────────────
+
+  _onDragStart(unitId) {
+    if (unitId !== 'player' || !this._state || this._ended) return;
+    if (this._state.currentUnit !== 'player') return;
+
+    this._reachableMap = this._state.getReachableHexes();
+    if (this._reachableMap.size === 0) return;
+
+    this._hexGrid.highlightReachable(this._reachableMap, this._state.player.initiative);
+  }
+
+  _onDragHover(unitId, q, r) {
+    if (unitId !== 'player' || !this._reachableMap) return;
+    if (!this._hexGrid) return;
+
+    const key = HexGrid.key(q, r);
+    if (!this._reachableMap.has(key)) {
+      this._hexGrid.clearPath();
+      return;
+    }
+
+    // Build blocked set (all occupied except player)
+    const blocked = new Set();
+    for (const [k, v] of Object.entries(this._state.grid.occupied)) {
+      if (v !== 'player') blocked.add(k);
+    }
+    // Also block impassable terrain
+    for (const [k, t] of Object.entries(this._state.grid.terrain)) {
+      if (t === 'wall' || t === 'void') blocked.add(k);
+    }
+
+    const path = HexGrid.findPath(
+      this._state.player.pos, { q, r },
+      blocked, this._state.grid.width, this._state.grid.height
+    );
+    if (path && path.length > 1) {
+      this._hexGrid.highlightPath(path.slice(1)); // skip start position
+    }
+  }
+
+  _onDragEnd(unitId, q, r) {
+    if (unitId !== 'player' || !this._state || this._ended) return;
+
+    const key = HexGrid.key(q, r);
+    const canMove = this._reachableMap && this._reachableMap.has(key);
+
+    // Clean up highlights
+    if (this._hexGrid) {
+      this._hexGrid.clearPath();
+      this._hexGrid.clearAllHighlights();
+    }
+    this._reachableMap = null;
+
+    if (canMove && this._state.currentUnit === 'player') {
+      const result = this._state.movePlayer({ q, r });
+      if (result.success) {
+        this._updateHPBars(); // refresh initiative bar
+      } else {
+        // Snap token back
+        const p = this._state.player;
+        this._hexGrid.moveToken('player', p.pos.q, p.pos.r);
+      }
+    } else {
+      // Snap token back to original position
+      const p = this._state.player;
+      if (this._hexGrid) this._hexGrid.moveToken('player', p.pos.q, p.pos.r);
     }
   }
 
