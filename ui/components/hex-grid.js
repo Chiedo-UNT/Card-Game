@@ -472,6 +472,10 @@ class HexGridRenderer {
   highlightRange(centerQ, centerR, maxRange, gridW, gridH) {
     this.clearRange();
     this._rangeKeys = [];
+    this._rangeOutOfKeys = [];
+
+    // Collect in-range keys for quick lookup
+    const inRangeSet = new Set();
     for (let radius = 0; radius <= maxRange; radius++) {
       const ring = HexGrid.ring({ q: centerQ, r: centerR }, radius);
       for (const { q, r } of ring) {
@@ -479,24 +483,21 @@ class HexGridRenderer {
         const key = `${q},${r}`;
         const el = this._cells[key];
         if (!el) continue;
+        inRangeSet.add(key);
         this._rangeKeys.push(key);
         el.dataset.inRange = '1';
-        // Subtle blue-white tint for cells in range
-        if (!el.dataset.cardTarget) {
-          el.style.outline = '1px solid rgba(120,180,255,0.35)';
-        }
+        el.style.background = 'rgba(80,160,255,0.18)';
+        el.style.outline = '2px solid rgba(100,180,255,0.5)';
       }
     }
-    // Highlight the border ring (just outside range) in red to show the limit
-    const borderRing = HexGrid.ring({ q: centerQ, r: centerR }, maxRange + 1);
-    for (const { q, r } of borderRing) {
-      if (!HexGrid.inBounds(q, r, gridW, gridH)) continue;
-      const key = `${q},${r}`;
-      const el = this._cells[key];
-      if (!el) continue;
-      this._rangeKeys.push(key);
+
+    // Dim all out-of-range cells
+    for (const [key, el] of Object.entries(this._cells)) {
+      if (inRangeSet.has(key)) continue;
+      this._rangeOutOfKeys.push(key);
       el.dataset.inRange = '0';
-      el.style.outline = '1px solid rgba(255,60,60,0.25)';
+      el.style.background = 'rgba(0,0,0,0.35)';
+      el.style.outline = '';
     }
   }
 
@@ -506,12 +507,20 @@ class HexGridRenderer {
     for (const key of this._rangeKeys) {
       const el = this._cells[key];
       if (!el) continue;
-      if (!el.dataset.cardTarget) {
-        el.style.outline = '';
-      }
+      el.style.background = this._stateBg(el.dataset.state || '');
+      if (!el.dataset.cardTarget) el.style.outline = '';
       delete el.dataset.inRange;
     }
     this._rangeKeys = [];
+    if (this._rangeOutOfKeys) {
+      for (const key of this._rangeOutOfKeys) {
+        const el = this._cells[key];
+        if (!el) continue;
+        el.style.background = this._stateBg(el.dataset.state || '');
+        delete el.dataset.inRange;
+      }
+      this._rangeOutOfKeys = [];
+    }
   }
 
   /** Clear all card targeting highlights. */
