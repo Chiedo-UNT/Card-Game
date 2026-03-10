@@ -97,13 +97,9 @@ class CombatScreen {
       intelligence: stats.intelligence || 3,
       endurance: stats.endurance || 3,
       volonte: stats.volonte || 3,
-      handSize: 9, // TODO: revert to 5 after testing
+      handSize: 5,
       enduranceRegen: 2,
-      deckList: (run.deck && run.deck.length ? run.deck : (arch.startingCards || [])).concat(
-        // Ensure new test cards are always available for testing
-        ['charge_heroique', 'boule_de_feu', 'mur_de_glace', 'elevation_terrain', 'magic_shield']
-          .filter(id => !(run.deck || arch.startingCards || []).includes(id))
-      ),
+      deckList: run.deck && run.deck.length ? run.deck : (arch.startingCards || []),
       weapons: run.equippedWeapons || [null, null],
     };
 
@@ -653,7 +649,7 @@ class CombatScreen {
    * Execute a card on a single target position.
    */
   _executeCard(cardInstance, cardDef, targetPos, cardEl) {
-    const result = this._state.applyCard(cardInstance.id, 'player', targetPos);
+    const result = this._state.applyCard(cardInstance.id, 'player', targetPos, cardInstance.instanceId);
     if (result.success) {
       const px = this._hexGrid._toPixel(targetPos.q, targetPos.r);
       const rect = this._hexGrid.getContainerRect();
@@ -686,7 +682,7 @@ class CombatScreen {
 
     // Apply card to the first target to deduct cost, then apply effects to the rest
     if (targets.length > 0) {
-      const result = this._state.applyCard(cardInstance.id, 'player', targets[0]);
+      const result = this._state.applyCard(cardInstance.id, 'player', targets[0], cardInstance.instanceId);
       if (result.success) {
         // Apply effects to remaining targets
         for (let i = 1; i < targets.length; i++) {
@@ -799,7 +795,7 @@ class CombatScreen {
 
       // Deduct card cost
       const result = this._state.applyCard(
-        this._placementMode.cardInstance.id, 'player', start);
+        this._placementMode.cardInstance.id, 'player', start, this._placementMode.cardInstance.instanceId);
 
       const px = this._hexGrid._toPixel(start.q, start.r);
       const rect = this._hexGrid.getContainerRect();
@@ -826,7 +822,7 @@ class CombatScreen {
         // All hexes placed — finalize
         const result = this._state.applyCard(
           this._placementMode.cardInstance.id, 'player',
-          this._placementMode.placed[0]);
+          this._placementMode.placed[0], this._placementMode.cardInstance.instanceId);
 
         const first = this._placementMode.placed[0];
         const px = this._hexGrid._toPixel(first.q, first.r);

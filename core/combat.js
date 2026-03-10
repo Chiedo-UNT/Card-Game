@@ -76,7 +76,7 @@ class CombatState {
   _initDeck() {
     const cards = (this.player.deckList || []).map(id => ({ id, instanceId: `${id}_${Math.random().toString(36).slice(2)}` }));
     this.player.deck = this._shuffle(cards);
-    this.drawCards(5);
+    this.drawCards(this.player.handSize || 5);
   }
 
   _shuffle(arr) {
@@ -193,7 +193,7 @@ class CombatState {
 
   // ─── Card System ──────────────────────────────────────────────────────────
 
-  applyCard(cardId, sourceId, targetPos) {
+  applyCard(cardId, sourceId, targetPos, instanceId) {
     const cardDef = Engine.getCard(cardId);
     if (!cardDef) {
       this._log(`Card ${cardId} not found.`);
@@ -242,7 +242,9 @@ class CombatState {
     }
 
     // Move card to discard (or lost if it has the lost tag)
-    const handIdx = source.hand.findIndex(c => c.id === cardId);
+    const handIdx = instanceId
+      ? source.hand.findIndex(c => c.instanceId === instanceId)
+      : source.hand.findIndex(c => c.id === cardId);
     if (handIdx !== -1) {
       const [card] = source.hand.splice(handIdx, 1);
       if (cardDef.tags && cardDef.tags.includes('Perdu')) {
@@ -475,7 +477,8 @@ class CombatState {
     unit.pos = { ...targetPos };
     this.grid.occupied[targetKey] = unitId;
 
-    Engine.bus.emit('combat:unit_moved', { unitId, from: { q: parseInt(oldKey), r: parseInt(oldKey.split(',')[1]) }, to: targetPos });
+    const [oldQ, oldR] = oldKey.split(',').map(Number);
+    Engine.bus.emit('combat:unit_moved', { unitId, from: { q: oldQ, r: oldR }, to: targetPos });
     return { success: true, newPos: targetPos };
   }
 
