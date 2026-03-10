@@ -222,9 +222,21 @@ class CombatScreen {
 
   _onCellClick(q, r) {
     if (!this._state || this._ended) return;
+
     const occupied = this._state.grid.occupied[`${q},${r}`];
+
+    // Click on enemy → target selection
     if (occupied && occupied !== 'player') {
       Engine.bus.emit('combat:target_selected', { q, r, targetId: occupied });
+      return;
+    }
+
+    // Click on empty cell → try to move player there (via BFS reachable check)
+    if (!occupied && this._state.currentUnit === 'player') {
+      const result = this._state.movePlayer({ q, r });
+      if (result.success) {
+        this._updateHPBars();
+      }
     }
   }
 

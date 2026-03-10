@@ -57,6 +57,7 @@ class HexGridRenderer {
     if (!el) return;
     el.dataset.state = state || '';
     el.className = 'hex-cell' + (state ? ` hex-cell--${state}` : '');
+    el.style.background = this._stateBg(state);
   }
 
   clearAllHighlights() {

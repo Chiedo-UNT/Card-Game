@@ -908,24 +908,11 @@ class CombatState {
 
   // Hex neighbors (flat-top)
   _hexNeighbors(pos) {
-    // Flat-top offset directions (even/odd columns)
-    const dirs = [
-      { q: 1, r: 0 }, { q: -1, r: 0 },
-      { q: 0, r: 1 }, { q: 0, r: -1 },
-      { q: 1, r: -1 }, { q: 1, r: 1 },
-    ];
-    return dirs.map(d => ({ q: pos.q + d.q, r: pos.r + d.r })).filter(p => this._isValidPos(p));
+    return HexGrid.neighbors(pos.q, pos.r).filter(p => this._isValidPos(p));
   }
 
   _hexDistance(a, b) {
-    // Cube coordinates
-    const aq = a.q - (a.r - (a.r & 1)) / 2;
-    const ar = a.r;
-    const as = -aq - ar;
-    const bq = b.q - (b.r - (b.r & 1)) / 2;
-    const br = b.r;
-    const bs = -bq - br;
-    return Math.max(Math.abs(aq - bq), Math.abs(ar - br), Math.abs(as - bs));
+    return HexGrid.distance(a, b);
   }
 
   _stepTowards(from, to) {
