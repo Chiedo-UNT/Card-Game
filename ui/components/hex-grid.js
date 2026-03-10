@@ -65,6 +65,11 @@ class HexGridRenderer {
       if (el) {
         el.dataset.state = '';
         el.className = 'hex-cell';
+        el.style.background = this._stateBg('');
+        el.style.outline = '';
+        el.style.filter = '';
+        delete el.dataset.pathHighlight;
+        delete el.dataset.dragHover;
       }
     }
     this._highlights.clear();
