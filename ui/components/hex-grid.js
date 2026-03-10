@@ -468,6 +468,52 @@ class HexGridRenderer {
     }
   }
 
+  /** Show the range ring around a center hex. Hexes within range get a subtle border. */
+  highlightRange(centerQ, centerR, maxRange, gridW, gridH) {
+    this.clearRange();
+    this._rangeKeys = [];
+    for (let radius = 0; radius <= maxRange; radius++) {
+      const ring = HexGrid.ring({ q: centerQ, r: centerR }, radius);
+      for (const { q, r } of ring) {
+        if (!HexGrid.inBounds(q, r, gridW, gridH)) continue;
+        const key = `${q},${r}`;
+        const el = this._cells[key];
+        if (!el) continue;
+        this._rangeKeys.push(key);
+        el.dataset.inRange = '1';
+        // Subtle blue-white tint for cells in range
+        if (!el.dataset.cardTarget) {
+          el.style.outline = '1px solid rgba(120,180,255,0.35)';
+        }
+      }
+    }
+    // Highlight the border ring (just outside range) in red to show the limit
+    const borderRing = HexGrid.ring({ q: centerQ, r: centerR }, maxRange + 1);
+    for (const { q, r } of borderRing) {
+      if (!HexGrid.inBounds(q, r, gridW, gridH)) continue;
+      const key = `${q},${r}`;
+      const el = this._cells[key];
+      if (!el) continue;
+      this._rangeKeys.push(key);
+      el.dataset.inRange = '0';
+      el.style.outline = '1px solid rgba(255,60,60,0.25)';
+    }
+  }
+
+  /** Clear range highlights. */
+  clearRange() {
+    if (!this._rangeKeys) return;
+    for (const key of this._rangeKeys) {
+      const el = this._cells[key];
+      if (!el) continue;
+      if (!el.dataset.cardTarget) {
+        el.style.outline = '';
+      }
+      delete el.dataset.inRange;
+    }
+    this._rangeKeys = [];
+  }
+
   /** Clear all card targeting highlights. */
   clearCardTargeting() {
     this._clearCardTargeting();

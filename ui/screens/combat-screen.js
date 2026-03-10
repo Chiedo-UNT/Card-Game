@@ -452,6 +452,14 @@ class CombatScreen {
       el.style.opacity = '0.3';
       this._dragCardDef = cardDef;
       this._dragCardInstance = cardInstance;
+
+      // Show range indicator on the grid
+      if (this._hexGrid && this._state && cardDef.forme !== 'self') {
+        const range = this._getCardRange(cardDef);
+        const p = this._state.player.pos;
+        this._hexGrid.highlightRange(p.q, p.r, range,
+          this._state.grid.width, this._state.grid.height);
+      }
     };
 
     const onMove = (clientX, clientY) => {
@@ -478,8 +486,11 @@ class CombatScreen {
         }
       }
 
-      // Clean up targeting highlights (unless we just entered a placement mode)
-      if (this._hexGrid && !this._placementMode) this._hexGrid.clearCardTargeting();
+      // Clean up targeting and range highlights (unless we just entered a placement mode)
+      if (this._hexGrid) {
+        if (!this._placementMode) this._hexGrid.clearCardTargeting();
+        this._hexGrid.clearRange();
+      }
       this._dragCardDef = null;
       this._dragCardInstance = null;
     };
@@ -524,24 +535,33 @@ class CombatScreen {
 
     const hex = this._hexGrid.clientToHex(clientX, clientY);
     const forme = cardDef.forme || 'single';
+    const maxRange = this._getCardRange(cardDef);
+    const playerPos = this._state.player.pos;
 
     switch (forme) {
       case 'self':
-        // Highlight the player's hex
-        this._hexGrid.highlightTarget(this._state.player.pos.q, this._state.player.pos.r);
+        // Highlight the player's hex (always in range)
+        this._hexGrid.highlightTarget(playerPos.q, playerPos.r);
         break;
 
       case 'single': {
-        // Find nearest entity to cursor position
+        // Find nearest entity to cursor position, but only if within range
         const nearest = this._findNearestUnit(hex);
-        if (nearest) {
+        if (nearest && HexGrid.distance(playerPos, nearest.pos) <= maxRange) {
           this._hexGrid.highlightTarget(nearest.pos.q, nearest.pos.r);
+        } else {
+          this._hexGrid._clearCardTargeting();
         }
         break;
       }
 
       case 'zone': {
-        // Highlight zone around cursor hex
+        // Only highlight zone if center hex is within range
+        const distToCenter = HexGrid.distance(playerPos, hex);
+        if (distToCenter > maxRange) {
+          this._hexGrid._clearCardTargeting();
+          break;
+        }
         const radius = cardDef.zoneRadius || 1;
         const zone = HexGrid.spiral({ q: hex.q, r: hex.r }, radius);
         const valid = zone.filter(h =>
@@ -550,7 +570,7 @@ class CombatScreen {
         // Find entities in the zone to highlight them
         const zoneKeys = new Set(valid.map(h => `${h.q},${h.r}`));
         const affected = [];
-        if (zoneKeys.has(`${this._state.player.pos.q},${this._state.player.pos.r}`)) {
+        if (zoneKeys.has(`${playerPos.q},${playerPos.r}`)) {
           affected.push('player');
         }
         for (const e of this._state.enemies) {
@@ -564,21 +584,44 @@ class CombatScreen {
       }
 
       case 'wall':
-      case 'terrain_place':
-        // During drag, just highlight the hex under cursor
-        if (HexGrid.inBounds(hex.q, hex.r, this._state.grid.width, this._state.grid.height)) {
+      case 'terrain_place': {
+        // Only highlight if hex is within range
+        const dist = HexGrid.distance(playerPos, hex);
+        if (dist <= maxRange && HexGrid.inBounds(hex.q, hex.r, this._state.grid.width, this._state.grid.height)) {
           this._hexGrid.highlightPlacement([hex]);
+        } else {
+          this._hexGrid._clearCardTargeting();
         }
         break;
+      }
 
-      default:
-        // Treat like single target
+      default: {
+        // Treat like single target with range check
         const near = this._findNearestUnit(hex);
-        if (near) {
+        if (near && HexGrid.distance(playerPos, near.pos) <= maxRange) {
           this._hexGrid.highlightTarget(near.pos.q, near.pos.r);
+        } else {
+          this._hexGrid._clearCardTargeting();
         }
         break;
+      }
     }
+  }
+
+  /**
+   * Return the max range of a card from the player.
+   * Uses cardDef.portee.max if defined, otherwise defaults by tag:
+   *   - Attaque + CaC (melee) → 1
+   *   - Attaque + Distance (ranged) → 5
+   *   - Magie (spell) → 4
+   *   - default → 1
+   */
+  _getCardRange(cardDef) {
+    if (cardDef.portee && cardDef.portee.max != null) return cardDef.portee.max;
+    const tags = cardDef.tags || [];
+    if (tags.includes('Distance')) return 5;
+    if (tags.includes('Magie'))    return 4;
+    return 1;
   }
 
   /**
@@ -615,22 +658,25 @@ class CombatScreen {
   _resolveCardDrop(clientX, clientY, cardInstance, cardDef, cardEl) {
     const hex = this._hexGrid.clientToHex(clientX, clientY);
     const forme = cardDef.forme || 'single';
+    const maxRange = this._getCardRange(cardDef);
+    const playerPos = this._state.player.pos;
 
     switch (forme) {
       case 'self':
-        this._executeCard(cardInstance, cardDef, this._state.player.pos, cardEl);
+        this._executeCard(cardInstance, cardDef, playerPos, cardEl);
         break;
 
       case 'single': {
         const nearest = this._findNearestUnit(hex);
-        if (nearest) {
+        if (nearest && HexGrid.distance(playerPos, nearest.pos) <= maxRange) {
           this._executeCard(cardInstance, cardDef, nearest.pos, cardEl);
         }
         break;
       }
 
       case 'zone': {
-        // AoE: apply to all units in the zone
+        // AoE: only if center is within range
+        if (HexGrid.distance(playerPos, hex) > maxRange) break;
         const radius = cardDef.zoneRadius || 1;
         const zone = HexGrid.spiral({ q: hex.q, r: hex.r }, radius);
         this._executeCardZone(cardInstance, cardDef, zone, cardEl);
@@ -638,22 +684,24 @@ class CombatScreen {
       }
 
       case 'wall':
-        // Enter wall placement mode (two-step)
-        if (HexGrid.inBounds(hex.q, hex.r, this._state.grid.width, this._state.grid.height)) {
+        // Enter wall placement mode (two-step) — range check
+        if (HexGrid.distance(playerPos, hex) <= maxRange &&
+            HexGrid.inBounds(hex.q, hex.r, this._state.grid.width, this._state.grid.height)) {
           this._startWallPlacement(cardInstance, cardDef, hex, cardEl);
         }
         break;
 
       case 'terrain_place':
-        // Enter terrain placement mode (multi-step)
-        if (HexGrid.inBounds(hex.q, hex.r, this._state.grid.width, this._state.grid.height)) {
+        // Enter terrain placement mode (multi-step) — range check
+        if (HexGrid.distance(playerPos, hex) <= maxRange &&
+            HexGrid.inBounds(hex.q, hex.r, this._state.grid.width, this._state.grid.height)) {
           this._startTerrainPlacement(cardInstance, cardDef, hex, cardEl);
         }
         break;
 
       default: {
         const near = this._findNearestUnit(hex);
-        if (near) {
+        if (near && HexGrid.distance(playerPos, near.pos) <= maxRange) {
           this._executeCard(cardInstance, cardDef, near.pos, cardEl);
         }
         break;
