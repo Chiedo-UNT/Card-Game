@@ -892,7 +892,7 @@ class CombatState {
   }
 
   _isValidPos(pos) {
-    return pos.q >= 0 && pos.q < this.grid.width && pos.r >= 0 && pos.r < this.grid.height;
+    return HexGrid.inBounds(pos.q, pos.r, this.grid.width, this.grid.height);
   }
 
   // Flat-top hex direction from a towards b (normalized step)
