@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="Dark fantasy card game with hex combat and roguelite progression." />
+  <meta name="theme-color" content="#0a0a14" />
+  <title>Card Game</title>
+
+  <!-- ── Styles ─────────────────────────────────────────── -->
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="styles/cards.css" />
+  <link rel="stylesheet" href="styles/combat.css" />
+  <link rel="stylesheet" href="styles/map.css" />
+  <link rel="stylesheet" href="styles/screens.css" />
+  <link rel="stylesheet" href="ui/ui.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       Loading Overlay
+  ══════════════════════════════════════════════════════════ -->
+  <div id="loading-overlay" class="loading-overlay" aria-live="polite" role="status">
+    <div class="loading-content">
+      <div class="loading-logo">
+        <span class="loading-logo-text">Card Game</span>
+        <div class="loading-logo-underline"></div>
+      </div>
+      <div class="loading-spinner" aria-hidden="true">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring spinner-ring--delay1"></div>
+        <div class="spinner-ring spinner-ring--delay2"></div>
+      </div>
+      <div class="loading-bar-track">
+        <div id="loading-bar"
+             class="loading-bar"
+             role="progressbar"
+             aria-valuenow="0"
+             aria-valuemin="0"
+             aria-valuemax="100">
+        </div>
+      </div>
+      <p id="loading-status" class="loading-status">Initialisation…</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       Application Root
+  ══════════════════════════════════════════════════════════ -->
+  <div id="app" role="main">
+
+    <!-- ── SCREEN: Main Menu ──────────────────────────── -->
+    <div class="screen" id="screen-menu"
+         role="region" aria-label="Menu principal">
+    </div>
+
+    <!-- ── SCREEN: Character Creation ────────────────── -->
+    <div class="screen" id="screen-character-creation"
+         role="region" aria-label="Création de personnage">
+    </div>
+
+    <!-- ── SCREEN: Character Select ──────────────────── -->
+    <div class="screen" id="screen-character-select"
+         role="region" aria-label="Sélection de personnage">
+    </div>
+
+    <!-- ── SCREEN: World Map ──────────────────────────── -->
+    <div class="screen" id="screen-map"
+         role="region" aria-label="Carte du monde">
+    </div>
+
+    <!-- ── SCREEN: Combat ─────────────────────────────── -->
+    <div class="screen" id="screen-combat"
+         role="region" aria-label="Combat">
+    </div>
+
+    <!-- ── SCREEN: Forge ──────────────────────────────── -->
+    <div class="screen" id="screen-forge"
+         role="region" aria-label="Forge de cartes">
+    </div>
+
+    <!-- ── SCREEN: Talent Tree ────────────────────────── -->
+    <div class="screen" id="screen-talent"
+         role="region" aria-label="Arbre de talents">
+    </div>
+
+    <!-- ── SCREEN: Merchant ───────────────────────────── -->
+    <div class="screen" id="screen-merchant"
+         role="region" aria-label="Marchand">
+    </div>
+
+    <!-- ── SCREEN: Collection ─────────────────────────── -->
+    <div class="screen" id="screen-collection"
+         role="region" aria-label="Collection de cartes">
+    </div>
+
+    <!-- ── SCREEN: Result ─────────────────────────────── -->
+    <div class="screen" id="screen-result"
+         role="region" aria-label="Résultat">
+    </div>
+
+  </div><!-- /#app -->
+
+  <!-- ── Global Tooltip portal ──────────────────────────── -->
+  <div id="tooltip-portal" class="tooltip-portal" aria-hidden="true"></div>
+
+  <!-- ── Global Modal portal ────────────────────────────── -->
+  <div id="modal-portal"
+       class="modal-portal"
+       role="dialog"
+       aria-modal="true"
+       aria-hidden="true">
+  </div>
+
+  <!-- ── Global Notifications ───────────────────────────── -->
+  <div id="notifications"
+       class="notifications-container"
+       aria-live="polite"
+       aria-atomic="false">
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       JavaScript — loaded in strict dependency order
+  ══════════════════════════════════════════════════════════ -->
+
+  <!-- 1. Core utilities -->
+  <script src="core/hex.js"></script>
+  <script src="core/tags.js"></script>
+  <script src="core/i18n.js"></script>
+  <script src="core/save.js"></script>
+
+  <!-- 2. Core systems -->
+  <script src="core/engine.js"></script>
+  <script src="core/qte.js"></script>
+  <script src="core/forge.js"></script>
+  <script src="core/map.js"></script>
+  <script src="core/combat.js"></script>
+
+  <!-- 3. UI Components -->
+  <script src="ui/components/card-renderer.js"></script>
+  <script src="ui/components/hex-grid.js"></script>
+  <script src="ui/components/timeline.js"></script>
+  <script src="ui/components/qte-overlay.js"></script>
+
+  <!-- 4. Screens -->
+  <script src="ui/screens/menu.js"></script>
+  <script src="ui/screens/character-creation.js"></script>
+  <script src="ui/screens/character-select.js"></script>
+  <script src="ui/screens/map-screen.js"></script>
+  <script src="ui/screens/combat-screen.js"></script>
+  <script src="ui/screens/forge-screen.js"></script>
+  <script src="ui/screens/talent-screen.js"></script>
+  <script src="ui/screens/merchant-screen.js"></script>
+  <script src="ui/screens/collection-screen.js"></script>
+  <script src="ui/screens/result-screen.js"></script>
+
+  <!-- 5. Entry point -->
+  <script src="main.js"></script>
+
+</body>
+</html>
