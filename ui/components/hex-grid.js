@@ -169,6 +169,8 @@ class HexGridRenderer {
       startY = e.clientY;
       token.style.cursor = 'grabbing';
       token.style.zIndex = '20';
+      token.style.pointerEvents = 'none'; // let mouse events pass to cells
+      token.style.transition = 'none'; // disable position transition during drag
 
       Engine.bus.emit('hexgrid:drag_start', { unitId });
 
@@ -203,6 +205,8 @@ class HexGridRenderer {
       this._dragging = false;
       token.style.cursor = 'grab';
       token.style.zIndex = '5';
+      token.style.pointerEvents = 'auto';
+      token.style.transition = 'left 0.25s ease, top 0.25s ease';
 
       const rect = this._container.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -261,33 +265,49 @@ class HexGridRenderer {
   }
 
   /**
-   * Highlight the path from player to a target hex.
+   * Highlight the path from player to a target hex, and mark the drop target.
    * @param {Array<{q,r}>} path — hex coords along the path
    */
   highlightPath(path) {
-    // Reset all reachable to their base gradient (don't clear — just remove path markers)
-    for (const key of this._highlights) {
-      const el = this._cells[key];
-      if (el && el.dataset.pathHighlight) {
-        el.style.outline = '';
-        delete el.dataset.pathHighlight;
-      }
-    }
+    // Clear previous path + hover markers
+    this._clearDragMarkers();
+
     for (const { q, r } of path) {
-      const el = this._cells[`${q},${r}`];
+      const key = `${q},${r}`;
+      const el = this._cells[key];
+      if (!el) continue;
+      el.style.outline = '2px solid rgba(255,255,255,0.45)';
+      el.dataset.pathHighlight = '1';
+    }
+
+    // Last cell in path = drop target → bright inner border
+    if (path.length > 0) {
+      const last = path[path.length - 1];
+      const el = this._cells[`${last.q},${last.r}`];
       if (el) {
-        el.style.outline = '2px solid rgba(255,255,255,0.6)';
-        el.dataset.pathHighlight = '1';
+        el.style.outline = '3px solid rgba(255,255,255,0.85)';
+        el.style.filter = 'brightness(1.5)';
+        el.dataset.dragHover = '1';
       }
     }
   }
 
   clearPath() {
+    this._clearDragMarkers();
+  }
+
+  _clearDragMarkers() {
     for (const key of this._highlights) {
       const el = this._cells[key];
-      if (el && el.dataset.pathHighlight) {
+      if (!el) continue;
+      if (el.dataset.pathHighlight) {
         el.style.outline = '';
         delete el.dataset.pathHighlight;
+      }
+      if (el.dataset.dragHover) {
+        el.style.filter = '';
+        el.style.outline = '';
+        delete el.dataset.dragHover;
       }
     }
   }
@@ -319,13 +339,14 @@ class HexGridRenderer {
 
     el.addEventListener('mouseenter', () => {
       this._hoveredKey = `${q},${r}`;
+      if (this._dragging) return; // don't override highlight during drag
       el.style.background = 'rgba(255,255,255,0.10)';
       Engine.bus.emit('hexgrid:cell_hover', { q, r });
     });
 
     el.addEventListener('mouseleave', () => {
       this._hoveredKey = null;
-      // Restore state-based bg
+      if (this._dragging) return; // don't override highlight during drag
       const state = el.dataset.state;
       el.style.background = this._stateBg(state);
     });
