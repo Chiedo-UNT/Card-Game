@@ -223,6 +223,12 @@ class CombatScreen {
   _onCellClick(q, r) {
     if (!this._state || this._ended) return;
 
+    // Handle placement modes first (wall / terrain)
+    if (this._placementMode) {
+      this._handlePlacementClick(q, r);
+      return;
+    }
+
     const occupied = this._state.grid.occupied[`${q},${r}`];
 
     // Click on enemy → target selection
@@ -392,29 +398,457 @@ class CombatScreen {
     for (const c of cards) {
       const def = Engine.getCard(c.id) || { id: c.id, tags: [], cost: {} };
       const el = CardRenderer.createSmall(def);
-      el.style.cursor = 'pointer';
+      el.style.cursor = 'grab';
       el.title = I18n.t(`card.${c.id}.name`) || c.id;
+      el.dataset.instanceId = c.instanceId;
+      el.dataset.cardId = c.id;
 
-      el.addEventListener('click', () => this._playCard(c, el));
+      this._initCardDrag(el, c, def);
       area.appendChild(el);
       this._handEls[c.instanceId] = el;
     }
   }
 
-  _playCard(cardInstance, el) {
-    if (!this._state || this._ended) return;
-    if (this._state.currentUnit !== 'player') return;
+  // ─── Card Drag & Drop ──────────────────────────────────────────────────
 
-    // For simplicity: play card targeting the first living enemy cell
-    const enemy = this._state.enemies.find(e => e.hp > 0);
-    const targetPos = enemy ? enemy.pos : null;
+  _initCardDrag(el, cardInstance, cardDef) {
+    let dragging = false;
+    let ghost = null;
+    let startX, startY;
 
+    const onStart = (clientX, clientY) => {
+      if (!this._state || this._ended) return;
+      if (this._state.currentUnit !== 'player') return;
+      dragging = true;
+      startX = clientX;
+      startY = clientY;
+
+      // Create a floating ghost clone
+      ghost = el.cloneNode(true);
+      ghost.style.cssText = `
+        position: fixed;
+        left: ${clientX - 40}px;
+        top: ${clientY - 60}px;
+        width: 80px;
+        z-index: 9999;
+        pointer-events: none;
+        opacity: 0.85;
+        transform: scale(1.1);
+        transition: none;
+      `;
+      document.body.appendChild(ghost);
+
+      el.style.opacity = '0.3';
+      this._dragCardDef = cardDef;
+      this._dragCardInstance = cardInstance;
+    };
+
+    const onMove = (clientX, clientY) => {
+      if (!dragging || !ghost) return;
+      ghost.style.left = `${clientX - 40}px`;
+      ghost.style.top  = `${clientY - 60}px`;
+
+      // Update targeting highlight based on card forme
+      this._updateCardTargeting(clientX, clientY, cardDef);
+    };
+
+    const onEnd = (clientX, clientY) => {
+      if (!dragging) return;
+      dragging = false;
+      el.style.opacity = '';
+      if (ghost) { ghost.remove(); ghost = null; }
+
+      // Check if dropped over the hex grid
+      if (this._hexGrid) {
+        const rect = this._hexGrid.getContainerRect();
+        if (clientX >= rect.left && clientX <= rect.right &&
+            clientY >= rect.top && clientY <= rect.bottom) {
+          this._resolveCardDrop(clientX, clientY, cardInstance, cardDef, el);
+        }
+      }
+
+      // Clean up targeting highlights
+      if (this._hexGrid) this._hexGrid.clearCardTargeting();
+      this._dragCardDef = null;
+      this._dragCardInstance = null;
+    };
+
+    // Mouse
+    el.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      onStart(e.clientX, e.clientY);
+      const moveHandler = (e2) => onMove(e2.clientX, e2.clientY);
+      const upHandler = (e2) => {
+        document.removeEventListener('mousemove', moveHandler);
+        document.removeEventListener('mouseup', upHandler);
+        onEnd(e2.clientX, e2.clientY);
+      };
+      document.addEventListener('mousemove', moveHandler);
+      document.addEventListener('mouseup', upHandler);
+    });
+
+    // Touch
+    el.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const t = e.touches[0];
+      onStart(t.clientX, t.clientY);
+    }, { passive: false });
+
+    el.addEventListener('touchmove', (e) => {
+      const t = e.touches[0];
+      onMove(t.clientX, t.clientY);
+    }, { passive: true });
+
+    el.addEventListener('touchend', (e) => {
+      const t = e.changedTouches[0];
+      onEnd(t.clientX, t.clientY);
+    });
+  }
+
+  /**
+   * During drag: update visual targeting feedback based on card forme.
+   */
+  _updateCardTargeting(clientX, clientY, cardDef) {
+    if (!this._hexGrid || !this._state) return;
+
+    const hex = this._hexGrid.clientToHex(clientX, clientY);
+    const forme = cardDef.forme || 'single';
+
+    switch (forme) {
+      case 'self':
+        // Highlight the player's hex
+        this._hexGrid.highlightTarget(this._state.player.pos.q, this._state.player.pos.r);
+        break;
+
+      case 'single': {
+        // Find nearest entity to cursor position
+        const nearest = this._findNearestUnit(hex);
+        if (nearest) {
+          this._hexGrid.highlightTarget(nearest.pos.q, nearest.pos.r);
+        }
+        break;
+      }
+
+      case 'zone': {
+        // Highlight zone around cursor hex
+        const radius = cardDef.zoneRadius || 1;
+        const zone = HexGrid.spiral({ q: hex.q, r: hex.r }, radius);
+        const valid = zone.filter(h =>
+          HexGrid.inBounds(h.q, h.r, this._state.grid.width, this._state.grid.height)
+        );
+        this._hexGrid.highlightZone(valid);
+        break;
+      }
+
+      case 'wall':
+      case 'terrain_place':
+        // During drag, just highlight the hex under cursor
+        if (HexGrid.inBounds(hex.q, hex.r, this._state.grid.width, this._state.grid.height)) {
+          this._hexGrid.highlightPlacement([hex]);
+        }
+        break;
+
+      default:
+        // Treat like single target
+        const near = this._findNearestUnit(hex);
+        if (near) {
+          this._hexGrid.highlightTarget(near.pos.q, near.pos.r);
+        }
+        break;
+    }
+  }
+
+  /**
+   * Find the nearest unit (player, enemy, or ally) to a hex position.
+   */
+  _findNearestUnit(hex) {
+    if (!this._state) return null;
+    let best = null;
+    let bestDist = Infinity;
+
+    // Check player
+    const pDist = HexGrid.distance(hex, this._state.player.pos);
+    if (pDist < bestDist) {
+      bestDist = pDist;
+      best = this._state.player;
+    }
+
+    // Check enemies
+    for (const e of this._state.enemies) {
+      if (e.hp <= 0) continue;
+      const d = HexGrid.distance(hex, e.pos);
+      if (d < bestDist) {
+        bestDist = d;
+        best = e;
+      }
+    }
+
+    return best;
+  }
+
+  /**
+   * Resolve what happens when a card is dropped on the grid.
+   */
+  _resolveCardDrop(clientX, clientY, cardInstance, cardDef, cardEl) {
+    const hex = this._hexGrid.clientToHex(clientX, clientY);
+    const forme = cardDef.forme || 'single';
+
+    switch (forme) {
+      case 'self':
+        this._executeCard(cardInstance, cardDef, this._state.player.pos, cardEl);
+        break;
+
+      case 'single': {
+        const nearest = this._findNearestUnit(hex);
+        if (nearest) {
+          this._executeCard(cardInstance, cardDef, nearest.pos, cardEl);
+        }
+        break;
+      }
+
+      case 'zone': {
+        // AoE: apply to all units in the zone
+        const radius = cardDef.zoneRadius || 1;
+        const zone = HexGrid.spiral({ q: hex.q, r: hex.r }, radius);
+        this._executeCardZone(cardInstance, cardDef, zone, cardEl);
+        break;
+      }
+
+      case 'wall':
+        // Enter wall placement mode (two-step)
+        if (HexGrid.inBounds(hex.q, hex.r, this._state.grid.width, this._state.grid.height)) {
+          this._startWallPlacement(cardInstance, cardDef, hex, cardEl);
+        }
+        break;
+
+      case 'terrain_place':
+        // Enter terrain placement mode (multi-step)
+        if (HexGrid.inBounds(hex.q, hex.r, this._state.grid.width, this._state.grid.height)) {
+          this._startTerrainPlacement(cardInstance, cardDef, hex, cardEl);
+        }
+        break;
+
+      default: {
+        const near = this._findNearestUnit(hex);
+        if (near) {
+          this._executeCard(cardInstance, cardDef, near.pos, cardEl);
+        }
+        break;
+      }
+    }
+  }
+
+  /**
+   * Execute a card on a single target position.
+   */
+  _executeCard(cardInstance, cardDef, targetPos, cardEl) {
     const result = this._state.applyCard(cardInstance.id, 'player', targetPos);
     if (result.success) {
-      CardRenderer.animatePlay(el, targetPos
-        ? { x: window.innerWidth / 2, y: window.innerHeight / 2 }
-        : { x: window.innerWidth / 2, y: window.innerHeight / 2 }, () => {});
+      const px = this._hexGrid._toPixel(targetPos.q, targetPos.r);
+      const rect = this._hexGrid.getContainerRect();
+      CardRenderer.animatePlay(cardEl,
+        { x: rect.left + px.x, y: rect.top + px.y }, () => {});
+      this._updateHPBars();
+      this._renderPlayerPanel();
+      this._updatePiles();
     }
+  }
+
+  /**
+   * Execute a zone AoE card — apply effects to all units in the zone.
+   */
+  _executeCardZone(cardInstance, cardDef, zoneHexes, cardEl) {
+    // First apply the card cost once (use player pos as anchor)
+    const zoneKeys = new Set(zoneHexes.map(h => `${h.q},${h.r}`));
+    const targets = [];
+
+    // Find all units in the zone
+    if (zoneKeys.has(`${this._state.player.pos.q},${this._state.player.pos.r}`)) {
+      targets.push(this._state.player.pos);
+    }
+    for (const e of this._state.enemies) {
+      if (e.hp <= 0) continue;
+      if (zoneKeys.has(`${e.pos.q},${e.pos.r}`)) {
+        targets.push(e.pos);
+      }
+    }
+
+    // Apply card to the first target to deduct cost, then apply effects to the rest
+    if (targets.length > 0) {
+      const result = this._state.applyCard(cardInstance.id, 'player', targets[0]);
+      if (result.success) {
+        // Apply effects to remaining targets
+        for (let i = 1; i < targets.length; i++) {
+          this._state._executeCardEffects(cardDef, 'player', targets[i]);
+        }
+        const center = zoneHexes[0] || targets[0];
+        const px = this._hexGrid._toPixel(center.q, center.r);
+        const rect = this._hexGrid.getContainerRect();
+        CardRenderer.animatePlay(cardEl,
+          { x: rect.left + px.x, y: rect.top + px.y }, () => {});
+        this._updateHPBars();
+        this._renderPlayerPanel();
+        this._updatePiles();
+      }
+    }
+  }
+
+  // ─── Wall Placement Mode ───────────────────────────────────────────────
+
+  _startWallPlacement(cardInstance, cardDef, startHex, cardEl) {
+    this._placementMode = {
+      type: 'wall',
+      cardInstance,
+      cardDef,
+      cardEl,
+      startHex,
+      wallLength: cardDef.wallLength || 3,
+    };
+
+    // Highlight the start hex as confirmed
+    this._hexGrid.highlightPlaced([startHex]);
+
+    // Highlight all valid endpoints (within wallLength distance)
+    const maxLen = cardDef.wallLength || 3;
+    const validEnds = [];
+    for (const [key, el] of Object.entries(this._hexGrid._cells)) {
+      const [q, r] = key.split(',').map(Number);
+      const dist = HexGrid.distance(startHex, { q, r });
+      if (dist > 0 && dist <= maxLen) {
+        validEnds.push({ q, r });
+      }
+    }
+    this._placementMode.validEnds = new Set(validEnds.map(h => `${h.q},${h.r}`));
+    this._hexGrid.highlightPlacement(validEnds, 'rgba(100,180,255,0.20)');
+    this._hexGrid.highlightPlaced([startHex]);
+  }
+
+  // ─── Terrain Placement Mode ────────────────────────────────────────────
+
+  _startTerrainPlacement(cardInstance, cardDef, startHex, cardEl) {
+    this._placementMode = {
+      type: 'terrain',
+      cardInstance,
+      cardDef,
+      cardEl,
+      placed: [startHex],
+      maxHexes: cardDef.maxHexes || 3,
+    };
+
+    this._hexGrid.highlightPlaced([startHex]);
+    this._showAdjacentPlaceable();
+  }
+
+  _showAdjacentPlaceable() {
+    if (!this._placementMode || this._placementMode.type !== 'terrain') return;
+    const placed = this._placementMode.placed;
+    const placedKeys = new Set(placed.map(h => `${h.q},${h.r}`));
+    const adjacent = [];
+
+    for (const hex of placed) {
+      for (const nb of HexGrid.neighbors(hex.q, hex.r)) {
+        const key = `${nb.q},${nb.r}`;
+        if (placedKeys.has(key)) continue;
+        if (!HexGrid.inBounds(nb.q, nb.r, this._state.grid.width, this._state.grid.height)) continue;
+        if (this._state.grid.occupied[key]) continue;
+        const terrain = this._state.grid.terrain[key];
+        if (terrain === 'wall' || terrain === 'void') continue;
+        if (!adjacent.some(h => h.q === nb.q && h.r === nb.r)) {
+          adjacent.push(nb);
+        }
+      }
+    }
+
+    this._placementMode.validNext = new Set(adjacent.map(h => `${h.q},${h.r}`));
+    this._hexGrid.clearCardTargeting();
+    this._hexGrid.highlightPlacement(adjacent, 'rgba(100,180,255,0.20)');
+    this._hexGrid.highlightPlaced(placed);
+  }
+
+  /**
+   * Handle cell clicks during placement modes (wall/terrain).
+   */
+  _handlePlacementClick(q, r) {
+    if (!this._placementMode) return false;
+    const key = `${q},${r}`;
+
+    if (this._placementMode.type === 'wall') {
+      if (!this._placementMode.validEnds.has(key)) return true; // consumed but invalid
+
+      // Build wall line from start to this hex
+      const start = this._placementMode.startHex;
+      const end = { q, r };
+      const wallHexes = this._getLineHexes(start, end);
+
+      // Apply terrain effect
+      for (const h of wallHexes) {
+        const hk = `${h.q},${h.r}`;
+        this._state.grid.terrain[hk] = 'wall';
+      }
+
+      // Deduct card cost
+      const result = this._state.applyCard(
+        this._placementMode.cardInstance.id, 'player', start);
+
+      const px = this._hexGrid._toPixel(start.q, start.r);
+      const rect = this._hexGrid.getContainerRect();
+      CardRenderer.animatePlay(this._placementMode.cardEl,
+        { x: rect.left + px.x, y: rect.top + px.y }, () => {});
+
+      this._hexGrid.clearCardTargeting();
+      this._placementMode = null;
+      this._updateHPBars();
+      this._renderPlayerPanel();
+      this._updatePiles();
+      return true;
+    }
+
+    if (this._placementMode.type === 'terrain') {
+      if (!this._placementMode.validNext || !this._placementMode.validNext.has(key)) return true;
+
+      this._placementMode.placed.push({ q, r });
+
+      // Apply terrain to this hex
+      this._state.grid.terrain[key] = 'wall';
+
+      if (this._placementMode.placed.length >= this._placementMode.maxHexes) {
+        // All hexes placed — finalize
+        const result = this._state.applyCard(
+          this._placementMode.cardInstance.id, 'player',
+          this._placementMode.placed[0]);
+
+        const first = this._placementMode.placed[0];
+        const px = this._hexGrid._toPixel(first.q, first.r);
+        const rect = this._hexGrid.getContainerRect();
+        CardRenderer.animatePlay(this._placementMode.cardEl,
+          { x: rect.left + px.x, y: rect.top + px.y }, () => {});
+
+        this._hexGrid.clearCardTargeting();
+        this._placementMode = null;
+        this._updateHPBars();
+        this._renderPlayerPanel();
+        this._updatePiles();
+      } else {
+        // Show next adjacent options
+        this._showAdjacentPlaceable();
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+  _getLineHexes(from, to) {
+    const dist = HexGrid.distance(from, to);
+    if (dist === 0) return [from];
+    const hexes = [];
+    for (let i = 0; i <= dist; i++) {
+      const t = i / dist;
+      const q = from.q + (to.q - from.q) * t;
+      const r = from.r + (to.r - from.r) * t;
+      hexes.push(HexGrid.round(q, r));
+    }
+    return hexes;
   }
 
   _updatePiles() {

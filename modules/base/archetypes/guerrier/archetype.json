@@ -17,10 +17,13 @@
   "startingCards": [
     "slash",
     "slash",
-    "slash",
     "thrust",
     "parade",
-    "parade"
+    "magic_shield",
+    "charge_heroique",
+    "boule_de_feu",
+    "mur_de_glace",
+    "elevation_terrain"
   ],
   "startingTalentPoints": 0,
   "startingGold": 60,

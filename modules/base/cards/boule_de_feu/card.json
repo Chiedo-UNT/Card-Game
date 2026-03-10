@@ -1,0 +1,14 @@
+{
+  "id": "boule_de_feu",
+  "rarity": "Rare",
+  "tags": ["Attaque", "Magie", "Rare"],
+  "requires": [],
+  "portee": { "min": 1, "max": 4 },
+  "forme": "zone",
+  "zoneRadius": 1,
+  "cost": { "initiative": 1, "mana": 2 },
+  "effects": [
+    { "type": "damage", "value": 3, "scaling": { "stat": "intelligence", "ratio": 0.4 } }
+  ],
+  "forgeable": false
+}

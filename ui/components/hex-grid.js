@@ -390,6 +390,92 @@ class HexGridRenderer {
     return { w, h };
   }
 
+  // ─── Card Targeting Highlights ──────────────────────────────────────────
+
+  /** Convert a client-space coordinate to axial hex. */
+  clientToHex(clientX, clientY) {
+    const rect = this._container.getBoundingClientRect();
+    const x = clientX - rect.left - this._padding - this._size;
+    const y = clientY - rect.top - this._padding - this._size * Math.sqrt(3) / 2;
+    return HexGrid.fromPixel(x, y, this._size);
+  }
+
+  /** Get container bounding rect for coordinate math. */
+  getContainerRect() {
+    return this._container.getBoundingClientRect();
+  }
+
+  /** Highlight a single target hex (the entity closest to cursor). */
+  highlightTarget(q, r) {
+    this._clearCardTargeting();
+    const key = `${q},${r}`;
+    const el = this._cells[key];
+    if (!el) return;
+    this._cardTargetKeys.push(key);
+    el.style.background = 'rgba(255,170,0,0.45)';
+    el.style.outline = '3px solid rgba(255,170,0,0.8)';
+    el.dataset.cardTarget = '1';
+  }
+
+  /** Highlight a zone (array of {q,r}). */
+  highlightZone(hexes) {
+    this._clearCardTargeting();
+    for (const { q, r } of hexes) {
+      const key = `${q},${r}`;
+      const el = this._cells[key];
+      if (!el) continue;
+      this._cardTargetKeys.push(key);
+      el.style.background = 'rgba(255,100,30,0.35)';
+      el.style.outline = '2px solid rgba(255,100,30,0.7)';
+      el.dataset.cardTarget = '1';
+    }
+  }
+
+  /** Highlight hexes for wall/terrain placement mode. */
+  highlightPlacement(hexes, color = 'rgba(100,180,255,0.40)') {
+    this._clearCardTargeting();
+    for (const { q, r } of hexes) {
+      const key = `${q},${r}`;
+      const el = this._cells[key];
+      if (!el) continue;
+      this._cardTargetKeys.push(key);
+      el.style.background = color;
+      el.style.outline = '2px solid rgba(100,180,255,0.7)';
+      el.dataset.cardTarget = '1';
+    }
+  }
+
+  /** Highlight placed (confirmed) hexes distinctly. */
+  highlightPlaced(hexes) {
+    for (const { q, r } of hexes) {
+      const key = `${q},${r}`;
+      const el = this._cells[key];
+      if (!el) continue;
+      if (!this._cardTargetKeys.includes(key)) this._cardTargetKeys.push(key);
+      el.style.background = 'rgba(60,200,255,0.50)';
+      el.style.outline = '3px solid rgba(60,200,255,0.9)';
+      el.dataset.cardTarget = '1';
+    }
+  }
+
+  /** Clear all card targeting highlights. */
+  clearCardTargeting() {
+    this._clearCardTargeting();
+  }
+
+  _clearCardTargeting() {
+    if (!this._cardTargetKeys) this._cardTargetKeys = [];
+    for (const key of this._cardTargetKeys) {
+      const el = this._cells[key];
+      if (!el) continue;
+      el.style.background = this._stateBg(el.dataset.state || '');
+      el.style.outline = '';
+      el.style.filter = '';
+      delete el.dataset.cardTarget;
+    }
+    this._cardTargetKeys = [];
+  }
+
   destroy() {
     this._cells  = {};
     this._tokens = {};

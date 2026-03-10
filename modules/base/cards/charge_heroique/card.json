@@ -1,0 +1,13 @@
+{
+  "id": "charge_heroique",
+  "rarity": "Commune",
+  "tags": ["Attaque", "CaC", "Commune"],
+  "requires": [],
+  "portee": { "min": 1, "max": 3 },
+  "forme": "single",
+  "cost": { "initiative": 1, "endurance": 1 },
+  "effects": [
+    { "type": "damage", "value": 4, "scaling": { "stat": "force", "ratio": 0.6 } }
+  ],
+  "forgeable": false
+}

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "name": "Base Module",
   "description": "Core game content",
-  "cards": ["magic_blast", "magic_shield", "armure_de_mage"],
+  "cards": ["magic_blast", "magic_shield", "armure_de_mage", "charge_heroique", "boule_de_feu", "mur_de_glace", "elevation_terrain"],
   "weapons": ["epee_de_base", "arc_de_base"],
   "enemies": ["gobelin", "garde_gobelin"],
   "archetypes": ["mage", "roublard", "guerrier", "berzerk"],

@@ -210,10 +210,11 @@ class CombatState {
       }
     }
 
-    // Check costs
-    const manaCost = cardDef.manaCost || 0;
-    const enduranceCost = cardDef.enduranceCost || 0;
-    const initiativeCost = cardDef.initiativeCost || 1;
+    // Check costs (support both flat props and nested cost object)
+    const cost = cardDef.cost || {};
+    const manaCost = cardDef.manaCost || cost.mana || 0;
+    const enduranceCost = cardDef.enduranceCost || cost.endurance || 0;
+    const initiativeCost = cardDef.initiativeCost != null ? cardDef.initiativeCost : (cost.initiative != null ? cost.initiative : 1);
 
     if (source.mana < manaCost) return { success: false, reason: 'insufficient_mana' };
     if (source.endurance < enduranceCost) return { success: false, reason: 'insufficient_endurance' };

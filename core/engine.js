@@ -322,7 +322,15 @@ class Engine {
   }
 
   getCard(id) {
-    return this._registry.cards[id] || null;
+    if (this._registry.cards[id]) return this._registry.cards[id];
+    // Fallback: search weapon cardDefinitions
+    for (const weapon of Object.values(this._registry.weapons)) {
+      if (weapon.cardDefinitions) {
+        const cd = weapon.cardDefinitions.find(c => c.id === id);
+        if (cd) return cd;
+      }
+    }
+    return null;
   }
 
   getWeapon(id) {

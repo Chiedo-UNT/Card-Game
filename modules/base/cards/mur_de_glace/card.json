@@ -1,0 +1,14 @@
+{
+  "id": "mur_de_glace",
+  "rarity": "Rare",
+  "tags": ["Skill", "Magie", "Rare"],
+  "requires": [],
+  "portee": { "min": 1, "max": 4 },
+  "forme": "wall",
+  "wallLength": 3,
+  "cost": { "initiative": 1, "mana": 3 },
+  "effects": [
+    { "type": "terrain", "terrain": "wall", "duration": 3 }
+  ],
+  "forgeable": false
+}

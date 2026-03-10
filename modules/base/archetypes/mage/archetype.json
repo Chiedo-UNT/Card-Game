@@ -17,10 +17,11 @@
   "startingCards": [
     "magic_blast",
     "magic_blast",
-    "magic_blast",
     "magic_shield",
-    "magic_shield",
-    "armure_de_mage"
+    "charge_heroique",
+    "boule_de_feu",
+    "mur_de_glace",
+    "elevation_terrain"
   ],
   "startingTalentPoints": 0,
   "startingGold": 50,
