@@ -309,12 +309,7 @@ const DevCombat = {
 
   // Tenter de charger les données du module (ennemis, cartes) si disponible
   try {
-    const resp = await fetch('../modules/base/manifest.json');
-    if (resp.ok) {
-      const manifest = await resp.json();
-      await Engine._loadResources('../modules/base', 'enemies', manifest.enemies || [], {});
-      await Engine._loadResources('../modules/base', 'cards',   manifest.cards   || [], {});
-    }
+    await Engine.loadModule('../modules/base');
   } catch(e) {
     console.info('[DEV] Module base non trouvé — ennemis/cartes par défaut utilisés');
   }
