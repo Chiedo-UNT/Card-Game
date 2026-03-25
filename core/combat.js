@@ -295,7 +295,13 @@ class CombatState {
         if (target.statuses.invisible && target.statuses.invisible.stacks > 0) {
           return { type: 'damage', success: false, reason: 'target_invisible' };
         }
-        let amount = effect.amount || 0;
+        let amount = effect.amount || effect.value || 0;
+        // Apply per-effect stat scaling (e.g. { stat: "dexterite", ratio: 0.4 })
+        if (effect.scaling) {
+          const stats = source.stats || source;
+          const statVal = stats[effect.scaling.stat] || 0;
+          amount += Math.floor(statVal * (effect.scaling.ratio || 0));
+        }
         const tags = cardDef.tags || [];
         amount += this.getDamageBonus(tags, source);
 
@@ -381,6 +387,25 @@ class CombatState {
         source.mana += amt;
         Engine.bus.emit('combat:resource_updated', { unitId: sourceId });
         return { type: 'restore_mana', amount: amt };
+      }
+
+      case 'debuff': {
+        if (!target) return { type: 'debuff', success: false, reason: 'no_target' };
+        // Chance-based application (e.g. 30% stun)
+        if (effect.chance && Math.random() > effect.chance) {
+          return { type: 'debuff', success: false, reason: 'chance_missed' };
+        }
+        const debuffId = effect.stat || effect.statusId || 'unknown';
+        this.applyStatus(targetId, debuffId, effect.stacks || 1, effect.duration || 1);
+        this._log(`${targetId} receives ${debuffId}!`);
+        return { type: 'debuff', targetId, statusId: debuffId };
+      }
+
+      case 'buff': {
+        const buffTarget = targetId || sourceId;
+        const buffId = effect.stat || effect.statusId || 'unknown';
+        this.applyStatus(buffTarget, buffId, effect.stacks || effect.value || 1, effect.duration || 1);
+        return { type: 'buff', targetId: buffTarget, statusId: buffId };
       }
 
       default:
@@ -665,19 +690,31 @@ class CombatState {
     // If dead, skip
     if (enemy.hp <= 0) { enemy.nextAction = null; return; }
 
-    const patterns = enemy.patterns || [];
-    if (patterns.length === 0) {
-      // Default: basic attack on player
-      enemy.nextAction = { type: 'attack', targetId: 'player', amount: enemy.attackDamage || 3, damageType: 'physical' };
-      return;
+    const dist = this._hexDistance(enemy.pos, this.player.pos);
+    const cards = enemy.cards || [];
+
+    // Find a card whose range covers the current distance to player
+    // Cycle through cards to vary behaviour
+    if (cards.length > 0) {
+      for (let i = 0; i < cards.length; i++) {
+        const idx = (enemy.currentPattern + i) % cards.length;
+        const card = cards[idx];
+        const portee = card.portee || {};
+        const minR = portee.min != null ? portee.min : 1;
+        const maxR = portee.max != null ? portee.max : 1;
+        const isAttack = card.tags && card.tags.includes('Attaque');
+
+        if (isAttack && dist >= minR && dist <= maxR) {
+          enemy.currentPattern = (idx + 1) % cards.length;
+          enemy.nextAction = { type: 'card', cardDef: card, targetId: 'player' };
+          Engine.bus.emit('combat:enemy_intent', { enemyId, action: enemy.nextAction });
+          return;
+        }
+      }
     }
 
-    // Cycle through patterns
-    const pattern = patterns[enemy.currentPattern % patterns.length];
-    enemy.currentPattern = (enemy.currentPattern + 1) % Math.max(1, patterns.length);
-    enemy.nextAction = { ...pattern };
-
-    // Pre-announce next action to UI
+    // No card in range — move towards player
+    enemy.nextAction = { type: 'move', targetId: 'player' };
     Engine.bus.emit('combat:enemy_intent', { enemyId, action: enemy.nextAction });
   }
 
@@ -688,19 +725,26 @@ class CombatState {
     const action = enemy.nextAction;
 
     switch (action.type) {
+      case 'card': {
+        // Play an actual card from the enemy's deck using the shared effect pipeline
+        const cardDef = action.cardDef;
+        const targetPos = this.player.pos;
+        this._log(`${enemyId} uses ${cardDef.id}!`);
+        this._executeCardEffects(cardDef, enemyId, targetPos);
+        break;
+      }
+
       case 'attack': {
         const targetId = action.targetId || 'player';
         const target = this._getUnit(targetId);
         if (!target) break;
 
-        // Check invisible
         if (target.statuses.invisible && target.statuses.invisible.stacks > 0) {
           this._log(`${enemyId} can't target ${targetId} — invisible.`);
           break;
         }
 
         let dmg = (action.amount || enemy.attackDamage || 3);
-        // Apply enemy puissance/faiblesse
         if (enemy.statuses.puissance && enemy.statuses.puissance.stacks > 0) {
           dmg += enemy.statuses.puissance.stacks;
           enemy.statuses.puissance.stacks -= 1;
@@ -711,12 +755,9 @@ class CombatState {
           enemy.statuses.faiblesse.stacks -= 1;
           if (enemy.statuses.faiblesse.stacks <= 0) delete enemy.statuses.faiblesse;
         }
-        if (enemy.statuses.berserk && enemy.statuses.berserk.stacks > 0) {
-          dmg += 2;
-        }
+        if (enemy.statuses.berserk && enemy.statuses.berserk.stacks > 0) dmg += 2;
         dmg = Math.max(0, dmg);
 
-        // Reflexion check
         if (target.statuses.reflexion && target.statuses.reflexion.stacks > 0) {
           target.statuses.reflexion.stacks -= 1;
           if (target.statuses.reflexion.stacks <= 0) delete target.statuses.reflexion;
@@ -729,37 +770,8 @@ class CombatState {
       }
 
       case 'move': {
-        if (action.targetPos) {
-          this.moveUnit(enemyId, action.targetPos);
-        } else {
-          // Move towards player
-          const stepPos = this._stepTowards(enemy.pos, this.player.pos);
-          if (stepPos) this.moveUnit(enemyId, stepPos);
-        }
-        break;
-      }
-
-      case 'status': {
-        const statusTarget = action.targetId || 'player';
-        this.applyStatus(statusTarget, action.statusId, action.stacks || 1, action.duration || 3);
-        break;
-      }
-
-      case 'heal': {
-        const healAmt = Math.min(action.amount || 5, enemy.maxHp - enemy.hp);
-        enemy.hp += healAmt;
-        Engine.bus.emit('combat:healed', { targetId: enemyId, amount: healAmt });
-        break;
-      }
-
-      case 'shield': {
-        this.applyStatus(enemyId, 'bouclier', action.amount || 3, 999);
-        break;
-      }
-
-      case 'summon': {
-        // Summon support for future extension
-        Engine.bus.emit('combat:enemy_summon', { enemyId, summonData: action.summonData });
+        const stepPos = this._stepTowards(enemy.pos, this.player.pos);
+        if (stepPos) this.moveUnit(enemyId, stepPos);
         break;
       }
 
